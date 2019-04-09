@@ -165,6 +165,10 @@ class Visualize(object):
     def __init__(self,dataset_list):
         self.dataset_list = dataset_list
 
+        # define plot methods dictionary
+        self.plot_methods = {'scatter':self.plot_scatter,'pcolormesh':self.plot_pcolormesh,'contour':self.plot_contour,'contourf':self.plot_contourf,'quiver':self.plot_quiver}
+        self.no_colorbar = ['quiver','contour']
+
 
 
     def one_map(self):
@@ -179,24 +183,44 @@ class Visualize(object):
         ax.add_feature(cfeature.STATES)
         ax.set_extent([225,300,25,50])
 
-        # define plot methods dictionary
-        plot_methods = {'scatter':self.plot_scatter,'pcolormesh':self.plot_pcolormesh,'contour':self.plot_contour,'contourf':self.plot_contourf,'quiver':self.plot_quiver}
-
         # define colorbar axes
-        no_colorbar = ['quiver','contour']
-        num_cbar = len([0 for dataset in self.dataset_list if dataset.plot_type not in no_colorbar])
+        num_cbar = len([0 for dataset in self.dataset_list if dataset.plot_type not in self.no_colorbar])
         gs_cbar = gridspec.GridSpecFromSubplotSpec(num_cbar,1,subplot_spec=gs[1],hspace=1.)
         cbn = 0
 
         # plot image on map
         for dataset in self.dataset_list:
-            f = plot_methods[dataset.plot_type](ax,dataset)
-            if dataset.plot_type not in no_colorbar:
+            f = self.plot_methods[dataset.plot_type](ax,dataset)
+            if dataset.plot_type not in self.no_colorbar:
                 cbar = fig.colorbar(f,cax=plt.subplot(gs_cbar[cbn]),orientation='horizontal')
                 cbar.set_label('{} {}'.format(dataset.instrument,dataset.parameter))
                 cbn+=1
 
         plt.show()
+
+    def multi_map(self):
+        # set up figure
+        fig = plt.figure(figsize=(10,10))
+        gs = gridspec.GridSpec(int(np.ceil(len(self.dataset_list)/2.)),2)
+        gs.update(left=0.01,right=0.9,wspace=0.2,hspace=0.01)
+        map_proj = ccrs.LambertConformal(central_longitude=-110.,central_latitude=40.)
+
+        for n, dataset in enumerate(self.dataset_list):
+            ax = plt.subplot(gs[n],projection=map_proj)
+            ax.coastlines()
+            ax.gridlines()
+            ax.add_feature(cfeature.STATES)
+            ax.set_extent([225,300,25,50])
+
+            f = self.plot_methods[dataset.plot_type](ax,dataset)
+            ax.set_title('{} {}'.format(dataset.instrument,dataset.parameter))
+            if dataset.plot_type not in self.no_colorbar:
+                pos = ax.get_position()
+                cax = fig.add_axes([pos.x1+0.01,pos.y0,0.015,(pos.y1-pos.y0)])
+                fig.colorbar(f,cax=cax)
+
+        plt.show()
+
 
     # functions for plotting based on different methods
     def plot_scatter(self,ax,dataset):
