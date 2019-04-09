@@ -7,26 +7,38 @@ import cartopy.feature as cfeature
 
 
 class DataSet(object):
-    def __init__(self,longitude=None,latitude=None,altitude=None,site=None,azimuth=None,elevation=None,ranges=None,values=None,instrument=None,time_range=None,cmap=None,plot_type='scatter'):
+    def __init__(self,**kwargs):
+        '''
+            Valid keyword inputs:
+            longitude
+            latitude
+            altitude
+            site
+            azimuth
+            elevation
+            ranges
+            values
+            instrument
+            time_range
+            cmap
+            plot_type
+        '''
+        # assign defaults
+        self.plot_type = 'scatter'
+        # assign input arguments
+        self.__dict__.update(kwargs)
 
         # parameters defining the ellipsoid earth (from WGS84)
         self.Req = 6378137.
         f = 1/298.257223563
         self.e2 = 2*f-f**2
 
-        if longitude is None:
-            if altitude is None:
-                latitude, longitude, altitude = self.azel2gd_ranges(site[0],site[1],site[2],azimuth,elevation,ranges)
-            elif ranges is None:
-                latitude, longitude, altitude = self.azel2gd_alt(site[0],site[1],site[2],azimuth,elevation,altitude)
-        self.longitude = longitude
-        self.latitude = latitude
-        self.altitude = altitude
-        self.values = values
-        self.instrument = instrument
-        self.time_range = time_range
-        self.cmap = cmap
-        self.plot_type = plot_type
+        # find latitude/longitude arrays if site, azimuth, and elevation are given
+        if not hasattr(self,'longitude'):
+            if hasattr(self,'ranges'):
+                self.latitude, self.longitude, self.altitude = self.azel2gd_ranges(self.site[0],self.site[1],self.site[2],self.azimuth,self.elevation,self.ranges)
+            elif hasattr(self,'altitude'):
+                self.latitude, self.longitude, self.altitude = self.azel2gd_alt(self.site[0],self.site[1],self.site[2],self.azimuth,self.elevation,self.altitude)
 
 
 
@@ -162,7 +174,7 @@ class Visualize(object):
         ax.coastlines()
         ax.gridlines()
         ax.add_feature(cfeature.STATES)
-        # ax.set_extent([225,300,25,50])
+        ax.set_extent([225,300,25,50])
 
         # define plot methods dictionary
         plot_methods = {'scatter':self.plot_scatter,'pcolormesh':self.plot_pcolormesh,'contour':self.plot_contour,'contourf':self.plot_contourf,'quiver':self.plot_quiver}
@@ -182,7 +194,8 @@ class Visualize(object):
         ax.pcolormesh(dataset.longitude, dataset.latitude, dataset.values, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.PlateCarree())
 
     def plot_contour(self,ax,dataset):
-        ax.contour(dataset.longitude, dataset.latitude, dataset.values, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.PlateCarree())
+        levels = 20
+        ax.contour(dataset.longitude, dataset.latitude, dataset.values, levels, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.PlateCarree())
 
     def plot_contourf(self,ax,dataset):
         ax.contourf(dataset.longitude, dataset.latitude, dataset.values, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.PlateCarree())
