@@ -2,6 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.gridspec as gridspec
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 
@@ -169,8 +170,10 @@ class Visualize(object):
     def one_map(self):
         # set up map
         fig = plt.figure(figsize=(15,10))
+        gs = gridspec.GridSpec(2,1,height_ratios=[3,1])
+        gs.update(left=0.01,right=0.99,top=0.99,bottom=0.1,hspace=0.01)
         map_proj = ccrs.LambertConformal(central_longitude=-110.,central_latitude=40.0)
-        ax = fig.add_subplot(111,projection=map_proj)
+        ax = plt.subplot(gs[0],projection=map_proj)
         ax.coastlines()
         ax.gridlines()
         ax.add_feature(cfeature.STATES)
@@ -179,30 +182,45 @@ class Visualize(object):
         # define plot methods dictionary
         plot_methods = {'scatter':self.plot_scatter,'pcolormesh':self.plot_pcolormesh,'contour':self.plot_contour,'contourf':self.plot_contourf,'quiver':self.plot_quiver}
 
-        # # plot image on map
+        # define colorbar axes
+        no_colorbar = ['quiver','contour']
+        num_cbar = len([0 for dataset in self.dataset_list if dataset.plot_type not in no_colorbar])
+        gs_cbar = gridspec.GridSpecFromSubplotSpec(num_cbar,1,subplot_spec=gs[1],hspace=1.)
+        cbn = 0
+
+        # plot image on map
         for dataset in self.dataset_list:
-            plot_methods[dataset.plot_type](ax,dataset)
+            f = plot_methods[dataset.plot_type](ax,dataset)
+            if dataset.plot_type not in no_colorbar:
+                cbar = fig.colorbar(f,cax=plt.subplot(gs_cbar[cbn]),orientation='horizontal')
+                cbar.set_label('{} {}'.format(dataset.instrument,dataset.parameter))
+                cbn+=1
 
         plt.show()
 
     # functions for plotting based on different methods
     def plot_scatter(self,ax,dataset):
         point_size = 100*np.exp(-0.03*dataset.values.size)+0.1
-        ax.scatter(dataset.longitude, dataset.latitude, c=dataset.values, s=point_size, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.Geodetic())
+        f = ax.scatter(dataset.longitude, dataset.latitude, c=dataset.values, s=point_size, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.Geodetic())
+        return f
 
     def plot_pcolormesh(self,ax,dataset):
-        ax.pcolormesh(dataset.longitude, dataset.latitude, dataset.values, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.PlateCarree())
+        f = ax.pcolormesh(dataset.longitude, dataset.latitude, dataset.values, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.PlateCarree())
+        return f
 
     def plot_contour(self,ax,dataset):
         levels = 20
-        ax.contour(dataset.longitude, dataset.latitude, dataset.values, levels, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.PlateCarree())
+        f = ax.contour(dataset.longitude, dataset.latitude, dataset.values, levels, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.PlateCarree())
+        ax.clabel(f,inline=1,fontsize=8,fmt='%1.1f')
+        return f
 
     def plot_contourf(self,ax,dataset):
-        ax.contourf(dataset.longitude, dataset.latitude, dataset.values, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.PlateCarree())
+        f = ax.contourf(dataset.longitude, dataset.latitude, dataset.values, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.PlateCarree())
+        return f
 
     def plot_quiver(self,ax,dataset):
-        ax.quiver(dataset.longitude, dataset.latitude, dataset.values[0], dataset.values[1],transform=ccrs.PlateCarree())
-
+        f = ax.quiver(dataset.longitude, dataset.latitude, dataset.values[0], dataset.values[1],transform=ccrs.PlateCarree())
+        return f
 
 
 def main():
