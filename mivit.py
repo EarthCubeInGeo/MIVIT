@@ -7,7 +7,7 @@ import cartopy.feature as cfeature
 
 
 class DataSet(object):
-    def __init__(self,longitude=None,latitude=None,altitude=None,site=None,azimuth=None,elevation=None,ranges=None,values=None,instrument=None,time_range=None,cmap=None):
+    def __init__(self,longitude=None,latitude=None,altitude=None,site=None,azimuth=None,elevation=None,ranges=None,values=None,instrument=None,time_range=None,cmap=None,plot_type='scatter'):
 
         # parameters defining the ellipsoid earth (from WGS84)
         self.Req = 6378137.
@@ -26,6 +26,7 @@ class DataSet(object):
         self.instrument = instrument
         self.time_range = time_range
         self.cmap = cmap
+        self.plot_type = plot_type
 
 
 
@@ -163,13 +164,31 @@ class Visualize(object):
         ax.add_feature(cfeature.STATES)
         # ax.set_extent([225,300,25,50])
 
+        # define plot methods dictionary
+        plot_methods = {'scatter':self.plot_scatter,'pcolormesh':self.plot_pcolormesh,'contour':self.plot_contour,'contourf':self.plot_contourf,'quiver':self.plot_quiver}
+
         # # plot image on map
         for dataset in self.dataset_list:
-            point_size = 100*np.exp(-0.03*dataset.values.size)+0.1
-            ax.scatter(dataset.longitude, dataset.latitude, c=dataset.values, s=point_size, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.Geodetic())
+            plot_methods[dataset.plot_type](ax,dataset)
 
         plt.show()
 
+    # functions for plotting based on different methods
+    def plot_scatter(self,ax,dataset):
+        point_size = 100*np.exp(-0.03*dataset.values.size)+0.1
+        ax.scatter(dataset.longitude, dataset.latitude, c=dataset.values, s=point_size, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.Geodetic())
+
+    def plot_pcolormesh(self,ax,dataset):
+        ax.pcolormesh(dataset.longitude, dataset.latitude, dataset.values, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.PlateCarree())
+
+    def plot_contour(self,ax,dataset):
+        ax.contour(dataset.longitude, dataset.latitude, dataset.values, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.PlateCarree())
+
+    def plot_contourf(self,ax,dataset):
+        ax.contourf(dataset.longitude, dataset.latitude, dataset.values, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.PlateCarree())
+
+    def plot_quiver(self,ax,dataset):
+        ax.quiver(dataset.longitude, dataset.latitude, dataset.values[0], dataset.values[1],transform=ccrs.PlateCarree())
 
 
 
