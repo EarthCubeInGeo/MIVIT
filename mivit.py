@@ -181,7 +181,7 @@ class Visualize(object):
         ax.coastlines()
         ax.gridlines()
         ax.add_feature(cfeature.STATES)
-        ax.set_extent([225,300,25,50])
+        ax.set_extent([225,300,25,55])
 
         # define colorbar axes
         num_cbar = len([0 for dataset in self.dataset_list if dataset.plot_type not in self.no_colorbar])
@@ -239,7 +239,8 @@ class Visualize(object):
         return f
 
     def plot_contourf(self,ax,dataset):
-        f = ax.contourf(dataset.longitude, dataset.latitude, dataset.values, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.PlateCarree())
+        levels = 20
+        f = ax.contourf(dataset.longitude, dataset.latitude, dataset.values, levels, cmap=plt.get_cmap(dataset.cmap), alpha=0.2, transform=ccrs.PlateCarree())
         return f
 
     def plot_quiver(self,ax,dataset):
