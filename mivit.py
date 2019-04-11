@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
+from apexpy import Apex
+from apexpy.apex import ApexHeightError
 
 
 class DataSet(object):
@@ -168,6 +170,7 @@ class Visualize(object):
         # define plot methods dictionary
         self.plot_methods = {'scatter':self.plot_scatter,'pcolormesh':self.plot_pcolormesh,'contour':self.plot_contour,'contourf':self.plot_contourf,'quiver':self.plot_quiver}
         self.no_colorbar = ['quiver','contour']
+        self.mlat_mlon = False
 
 
 
@@ -182,6 +185,9 @@ class Visualize(object):
         ax.gridlines()
         ax.add_feature(cfeature.STATES)
         ax.set_extent([225,300,25,55])
+
+        # add magnetic meridian lines
+        self.magnetic_meridians(ax)
 
         # define colorbar axes
         num_cbar = len([0 for dataset in self.dataset_list if dataset.plot_type not in self.no_colorbar])
@@ -221,6 +227,21 @@ class Visualize(object):
 
         plt.show()
 
+    def magnetic_meridians(self,ax):
+        if self.mlat_mlon:
+            A = Apex(2017)
+            for mlat in np.arange(-90,90,10):
+                try:
+                    gdlat, gdlon = A.convert(mlat,np.linspace(0,360,100),'apex','geo',height=0)
+                    ax.plot(gdlon,gdlat,transform=ccrs.Geodetic(),color='pink',linewidth=0.7)
+                except ApexHeightError as e:
+                    continue
+            for mlon in np.arange(0,360,30):
+                try:
+                    gdlat, gdlon = A.convert(np.linspace(-90,90,100),mlon,'apex','geo',height=0)
+                    ax.plot(gdlon,gdlat,transform=ccrs.Geodetic(),color='pink',linewidth=0.7)
+                except ApexHeightError as e:
+                    continue
 
     # functions for plotting based on different methods
     def plot_scatter(self,ax,dataset):

@@ -49,7 +49,7 @@ def test():
         i = target_index(targtime,tstmp)
         latitude = file['/Data/Array Layout/gdlat'][:]
         longitude = file['/Data/Array Layout/glon'][:]
-        tec = file['/Data/Array Layout/2D Parameters/dtec'][:,:,i]
+        tec = file['/Data/Array Layout/2D Parameters/tec'][:,:,i]
     Lon, Lat = np.meshgrid(longitude,latitude)
     tec = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='jet',plot_type='contour', instrument='GPS', parameter='TEC')
 
@@ -97,8 +97,9 @@ def test():
 
 
     plot = Visualize([mango,tec,mlh,mlh_fpi,mlh_fpi_vec]+sd_data)
+    plot.mlat_mlon=True
     plot.one_map()
-    plot.multi_map()
+    # plot.multi_map()
 
 
 
