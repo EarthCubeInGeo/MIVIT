@@ -24,15 +24,13 @@ def test():
 
         site = pydarn.radar.site(radId=scan[0].stid,dt=scan[0].time)
         fov = pydarn.radar.radFov.fov(site=site,rsep=scan[0].prm.rsep,ngates=scan[0].prm.nrang+1,nbeams=site.maxbeam,coords='geo',date_time=scan[0].time)
-        lat = []
-        lon = []
-        velocity = []
+
+        velocity = np.full(fov.latCenter.shape,np.nan)
         for beam in scan:
             for k, r in enumerate(beam.fit.slist):
-                lat.append(fov.latCenter[beam.bmnum,r])
-                lon.append(fov.lonCenter[beam.bmnum,r])
-                velocity.append(beam.fit.v[k])
-        sd_data.append(DataSet(longitude=np.array(lon),latitude=np.array(lat),values=np.array(velocity),cmap='bwr',instrument='SuperDARN '+rad.upper(), parameter='Velocity'))
+                velocity[beam.bmnum,r] = beam.fit.v[k]
+        # sd_data.append(DataSet(longitude=np.array(fov.lonCenter),latitude=np.array(fov.latCenter),values=np.array(velocity),cmap='bwr',instrument='SuperDARN '+rad.upper(), parameter='Velocity'))
+        sd_data.append(DataSet(longitude=np.array(fov.lonFull),latitude=np.array(fov.latFull),values=np.array(velocity),cmap='bwr',plot_type='pcolormesh',instrument='SuperDARN '+rad.upper(), parameter='Velocity'))
 
 
 
