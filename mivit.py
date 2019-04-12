@@ -172,13 +172,14 @@ class DataSet(object):
 
 
 class Visualize(object):
-    def __init__(self,dataset_list):
+    def __init__(self,dataset_list,map_features=['gridlines','coastlines']):
         self.dataset_list = dataset_list
 
         # define plot methods dictionary
         self.plot_methods = {'scatter':self.plot_scatter,'pcolormesh':self.plot_pcolormesh,'contour':self.plot_contour,'contourf':self.plot_contourf,'quiver':self.plot_quiver}
         self.no_colorbar = ['quiver','contour']
-        self.mlat_mlon = False
+
+        self.map_features = map_features
 
 
 
@@ -189,13 +190,8 @@ class Visualize(object):
         gs.update(left=0.01,right=0.99,top=0.99,bottom=0.1,hspace=0.01)
         map_proj = ccrs.LambertConformal(central_longitude=-110.,central_latitude=40.0)
         ax = plt.subplot(gs[0],projection=map_proj)
-        ax.coastlines()
-        ax.gridlines()
-        ax.add_feature(cfeature.STATES)
-        ax.set_extent([225,300,25,55])
-
-        # add magnetic meridian lines
-        self.magnetic_meridians(ax)
+        # set up background gridlines, coastlines, ect on map
+        self.map_setup(ax)
 
         # define colorbar axes
         num_cbar = len([0 for dataset in self.dataset_list if dataset.plot_type not in self.no_colorbar])
@@ -221,10 +217,8 @@ class Visualize(object):
 
         for n, dataset in enumerate(self.dataset_list):
             ax = plt.subplot(gs[n],projection=map_proj)
-            ax.coastlines()
-            ax.gridlines()
-            ax.add_feature(cfeature.STATES)
-            ax.set_extent([225,300,25,50])
+            # set up background gridlines, coastlines, ect on map
+            self.map_setup(ax)
 
             f = self.plot_methods[dataset.plot_type](ax,dataset)
             ax.set_title('{} {}'.format(dataset.instrument,dataset.parameter))
@@ -235,21 +229,34 @@ class Visualize(object):
 
         plt.show()
 
+    def map_setup(self, ax):
+        if 'gridlines' in self.map_features:
+            ax.gridlines()
+        if 'mag_gridlines' in self.map_features:
+            self.magnetic_meridians(ax)
+        if 'coastlines' in self.map_features:
+            ax.coastlines()
+        if 'statelines' in self.map_features:
+            ax.add_feature(cfeature.STATES)
+
+        ax.set_extent([225,300,25,55])
+
+
     def magnetic_meridians(self,ax):
-        if self.mlat_mlon:
-            A = Apex(2017)
-            for mlat in np.arange(-90,90,10):
-                try:
-                    gdlat, gdlon = A.convert(mlat,np.linspace(0,360,100),'apex','geo',height=0)
-                    ax.plot(gdlon,gdlat,transform=ccrs.Geodetic(),color='pink',linewidth=1.)
-                except ApexHeightError as e:
-                    continue
-            for mlon in np.arange(0,360,30):
-                try:
-                    gdlat, gdlon = A.convert(np.linspace(-90,90,100),mlon,'apex','geo',height=0)
-                    ax.plot(gdlon,gdlat,transform=ccrs.Geodetic(),color='pink',linewidth=1.)
-                except ApexHeightError as e:
-                    continue
+        A = Apex(2017)
+        for mlat in np.arange(-90,90,10):
+            try:
+                gdlat, gdlon = A.convert(mlat,np.linspace(0,360,100),'apex','geo',height=0)
+                ax.plot(gdlon,gdlat,transform=ccrs.Geodetic(),color='pink',linewidth=1.)
+            except ApexHeightError as e:
+                continue
+        for mlon in np.arange(0,360,30):
+            try:
+                gdlat, gdlon = A.convert(np.linspace(-90,90,100),mlon,'apex','geo',height=0)
+                ax.plot(gdlon,gdlat,transform=ccrs.Geodetic(),color='pink',linewidth=1.)
+            except ApexHeightError as e:
+                continue
+
 
     # functions for plotting based on different methods
     def plot_scatter(self,ax,dataset):

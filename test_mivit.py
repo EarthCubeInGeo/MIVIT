@@ -97,10 +97,9 @@ def test():
 
 
 
-    plot = Visualize([mango,tec1,tec2,mlh,mlh_fpi,mlh_fpi_vec]+sd_data)
-    plot.mlat_mlon=True
+    plot = Visualize([mango,tec1,tec2,mlh,mlh_fpi,mlh_fpi_vec]+sd_data, map_features=['gridlines','coastlines','mag_gridlines'])
     plot.one_map()
-    # plot.multi_map()
+    plot.multi_map()
 
 
 
