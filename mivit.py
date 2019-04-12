@@ -25,11 +25,19 @@ class DataSet(object):
             time_range
             cmap
             plot_type
+            plot_kwargs
         '''
         # assign defaults
         self.plot_type = 'scatter'
+        self.plot_kwargs = {}
         # assign input arguments
         self.__dict__.update(kwargs)
+
+        # add the colormap to the plot_kwargs dict
+        try:
+            self.plot_kwargs['cmap'] = plt.get_cmap(self.cmap)
+        except AttributeError:
+            self.plot_kwargs['cmap'] = plt.get_cmap('jet')
 
         # parameters defining the ellipsoid earth (from WGS84)
         self.Req = 6378137.
@@ -233,35 +241,44 @@ class Visualize(object):
             for mlat in np.arange(-90,90,10):
                 try:
                     gdlat, gdlon = A.convert(mlat,np.linspace(0,360,100),'apex','geo',height=0)
-                    ax.plot(gdlon,gdlat,transform=ccrs.Geodetic(),color='pink',linewidth=0.7)
+                    ax.plot(gdlon,gdlat,transform=ccrs.Geodetic(),color='pink',linewidth=1.)
                 except ApexHeightError as e:
                     continue
             for mlon in np.arange(0,360,30):
                 try:
                     gdlat, gdlon = A.convert(np.linspace(-90,90,100),mlon,'apex','geo',height=0)
-                    ax.plot(gdlon,gdlat,transform=ccrs.Geodetic(),color='pink',linewidth=0.7)
+                    ax.plot(gdlon,gdlat,transform=ccrs.Geodetic(),color='pink',linewidth=1.)
                 except ApexHeightError as e:
                     continue
 
     # functions for plotting based on different methods
     def plot_scatter(self,ax,dataset):
-        point_size = 100*np.exp(-0.03*dataset.values.size)+0.1
-        f = ax.scatter(dataset.longitude, dataset.latitude, c=dataset.values, s=point_size, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.Geodetic())
+        if 's' not in dataset.plot_kwargs:
+            dataset.plot_kwargs['s'] = 100*np.exp(-0.03*dataset.values.size)+0.1
+        f = ax.scatter(dataset.longitude, dataset.latitude, c=dataset.values, transform=ccrs.Geodetic(), **dataset.plot_kwargs)
         return f
 
     def plot_pcolormesh(self,ax,dataset):
-        f = ax.pcolormesh(dataset.longitude, dataset.latitude, dataset.values, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.PlateCarree())
+        f = ax.pcolormesh(dataset.longitude, dataset.latitude, dataset.values, transform=ccrs.PlateCarree(), **dataset.plot_kwargs)
         return f
 
     def plot_contour(self,ax,dataset):
-        levels = 20
-        f = ax.contour(dataset.longitude, dataset.latitude, dataset.values, levels, cmap=plt.get_cmap(dataset.cmap), transform=ccrs.PlateCarree())
+        try:
+            levels = dataset.plot_kwargs['levels']
+            del dataset.plot_kwargs['levels']
+        except KeyError:
+            levels = 20
+        f = ax.contour(dataset.longitude, dataset.latitude, dataset.values, levels, transform=ccrs.PlateCarree(), **dataset.plot_kwargs)
         ax.clabel(f,inline=1,fontsize=8,fmt='%1.1f')
         return f
 
     def plot_contourf(self,ax,dataset):
-        levels = 20
-        f = ax.contourf(dataset.longitude, dataset.latitude, dataset.values, levels, cmap=plt.get_cmap(dataset.cmap), alpha=0.2, transform=ccrs.PlateCarree())
+        try:
+            levels = dataset.plot_kwargs['levels']
+            del dataset.plot_kwargs['levels']
+        except KeyError:
+            levels = 20
+        f = ax.contourf(dataset.longitude, dataset.latitude, dataset.values, levels, transform=ccrs.PlateCarree(), **dataset.plot_kwargs)
         return f
 
     def plot_quiver(self,ax,dataset):

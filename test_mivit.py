@@ -29,8 +29,8 @@ def test():
         for beam in scan:
             for k, r in enumerate(beam.fit.slist):
                 velocity[beam.bmnum,r] = beam.fit.v[k]
-        # sd_data.append(DataSet(longitude=np.array(fov.lonCenter),latitude=np.array(fov.latCenter),values=np.array(velocity),cmap='bwr',instrument='SuperDARN '+rad.upper(), parameter='Velocity'))
-        sd_data.append(DataSet(longitude=np.array(fov.lonFull),latitude=np.array(fov.latFull),values=np.array(velocity),cmap='bwr',plot_type='pcolormesh',instrument='SuperDARN '+rad.upper(), parameter='Velocity'))
+        # sd_data.append(DataSet(longitude=np.array(fov.lonCenter),latitude=np.array(fov.latCenter),values=np.array(velocity),cmap='bwr',instrument='SuperDARN '+rad.upper(), parameter='Velocity',plot_kwargs={'s':30,'vmin':-40,'vmax':40}))
+        sd_data.append(DataSet(longitude=np.array(fov.lonFull),latitude=np.array(fov.latFull),values=np.array(velocity),cmap='bwr',plot_type='pcolormesh',instrument='SuperDARN '+rad.upper(), parameter='Velocity',plot_kwargs={'vmin':-40,'vmax':40}))
 
 
 
@@ -51,7 +51,8 @@ def test():
         longitude = file['/Data/Array Layout/glon'][:]
         tec = file['/Data/Array Layout/2D Parameters/tec'][:,:,i]
     Lon, Lat = np.meshgrid(longitude,latitude)
-    tec = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='jet',plot_type='contour', instrument='GPS', parameter='TEC')
+    tec1 = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='jet',plot_type='contourf', instrument='GPS', parameter='TEC', plot_kwargs={'alpha':0.2, 'levels':25})
+    tec2 = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='jet',plot_type='contour', instrument='GPS', parameter='TEC', plot_kwargs={'levels':25})
 
 
 
@@ -90,13 +91,13 @@ def test():
         longitude = file['/Data/Table Layout']['glon'][50]
         altitude = file['/Data/Table Layout']['alte'][50]
     time = dt.datetime.utcfromtimestamp(tstmp)
-    mlh_fpi_vec = DataSet(values=np.array([np.array([ve]),np.array([vn]),np.array([0.])]), latitude=np.array([latitude]), longitude=np.array([longitude]), altitude=np.array([altitude]), cmap='jet', plot_type='quiver', instrument='Millstone Hill FPI', parameter='Vn')
+    mlh_fpi_vec = DataSet(values=np.array([np.array([ve]),np.array([vn]),np.array([0.])]), latitude=np.array([latitude]), longitude=np.array([longitude]), altitude=np.array([altitude]), plot_type='quiver', instrument='Millstone Hill FPI', parameter='Vn')
 
 
 
 
 
-    plot = Visualize([mango,tec,mlh,mlh_fpi,mlh_fpi_vec]+sd_data)
+    plot = Visualize([mango,tec1,tec2,mlh,mlh_fpi,mlh_fpi_vec]+sd_data)
     plot.mlat_mlon=True
     plot.one_map()
     # plot.multi_map()
