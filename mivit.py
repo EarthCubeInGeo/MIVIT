@@ -187,7 +187,7 @@ class Visualize(object):
         # set up map
         fig = plt.figure(figsize=(15,10))
         gs = gridspec.GridSpec(2,1,height_ratios=[3,1])
-        gs.update(left=0.01,right=0.99,top=0.99,bottom=0.1,hspace=0.01)
+        gs.update(left=0.01,right=0.99,top=0.99,bottom=0.1,hspace=0.04)
         map_proj = ccrs.LambertConformal(central_longitude=-110.,central_latitude=40.0)
         ax = plt.subplot(gs[0],projection=map_proj)
         # set up background gridlines, coastlines, ect on map
@@ -195,7 +195,10 @@ class Visualize(object):
 
         # define colorbar axes
         num_cbar = len([0 for dataset in self.dataset_list if dataset.plot_type not in self.no_colorbar])
-        gs_cbar = gridspec.GridSpecFromSubplotSpec(num_cbar,1,subplot_spec=gs[1],hspace=1.)
+        if num_cbar > 4:
+            gs_cbar = gridspec.GridSpecFromSubplotSpec(int(np.ceil(num_cbar/2.)),2,subplot_spec=gs[1],hspace=50*gs.hspace,wspace=0.1)
+        else:
+            gs_cbar = gridspec.GridSpecFromSubplotSpec(num_cbar,1,subplot_spec=gs[1],hspace=50*gs.hspace,wspace=0.1)
         cbn = 0
 
         # plot image on map
@@ -230,32 +233,148 @@ class Visualize(object):
         plt.show()
 
     def map_setup(self, ax):
+
+        ax.set_extent([230,285,25,55])
+        xticks = []
+        yticks = []
+        xticklabels = []
+        yticklabels = []
+        xtickcolor = []
+        ytickcolor = []
+
         if 'gridlines' in self.map_features:
-            ax.gridlines()
+            latlines = range(20,80,10)
+            lonlines = range(200,330,30)
+            ax.gridlines(xlocs=lonlines,ylocs=latlines,crs=ccrs.Geodetic())
+
+            gridlines = [np.array([np.linspace(0,360,100),np.full(100,lat)]) for lat in latlines] + [np.array([np.full(100,lon),np.linspace(-90,90,100)]) for lon in lonlines]
+            gridlabels = ['{} N'.format(lat) for lat in latlines] + ['{} E'.format(lon) for lon in lonlines]
+            xt, yt, xtl, ytl = self.map_ticks(ax,gridlines,gridlabels)
+            xticks.extend(xt)
+            yticks.extend(yt)
+            xticklabels.extend(xtl)
+            yticklabels.extend(ytl)
+            xtickcolor.extend(['black']*len(xt))
+            ytickcolor.extend(['black']*len(yt))
+
         if 'mag_gridlines' in self.map_features:
-            self.magnetic_meridians(ax)
+            mlatlines = range(20,80,10)
+            mlonlines = range(300,390,30)
+            gridlines, gridlabels = self.magnetic_gridlines(ax,xlocs=mlonlines,ylocs=mlatlines)
+            xt, yt, xtl, ytl = self.map_ticks(ax,gridlines,gridlabels)
+            xticks.extend(xt)
+            yticks.extend(yt)
+            xticklabels.extend(xtl)
+            yticklabels.extend(ytl)
+            xtickcolor.extend(['red']*len(xt))
+            ytickcolor.extend(['red']*len(yt))
+
+        # put gridline markers on plot
+        ax.set_xticks(xticks)
+        ax.set_xticklabels(xticklabels)
+        for t, c in zip(ax.xaxis.get_ticklabels(),xtickcolor):
+            t.set_color(c)
+        ax.set_yticks(yticks)
+        ax.set_yticklabels(yticklabels)
+        for t, c in zip(ax.yaxis.get_ticklabels(),ytickcolor):
+            t.set_color(c)
+
+
         if 'coastlines' in self.map_features:
             ax.coastlines()
+
         if 'statelines' in self.map_features:
             ax.add_feature(cfeature.STATES)
 
-        ax.set_extent([225,300,25,55])
 
 
-    def magnetic_meridians(self,ax):
+    def magnetic_gridlines(self,ax,xlocs=None,ylocs=None):
+        if not xlocs:
+            xlocs = np.arange(0,360,30)
+        if not ylocs:
+            ylocs = np.arange(-90,90,15)
         A = Apex(2017)
-        for mlat in np.arange(-90,90,10):
+        gridlines = []
+        gridlabels = []
+        for mlat in ylocs:
             try:
                 gdlat, gdlon = A.convert(mlat,np.linspace(0,360,100),'apex','geo',height=0)
                 ax.plot(gdlon,gdlat,transform=ccrs.Geodetic(),color='pink',linewidth=1.)
+                gridlines.append(np.array([gdlon,gdlat]))
+                gridlabels.append('{} N'.format(mlat))
             except ApexHeightError as e:
                 continue
-        for mlon in np.arange(0,360,30):
+        for mlon in xlocs:
             try:
                 gdlat, gdlon = A.convert(np.linspace(-90,90,100),mlon,'apex','geo',height=0)
                 ax.plot(gdlon,gdlat,transform=ccrs.Geodetic(),color='pink',linewidth=1.)
+                gridlines.append(np.array([gdlon,gdlat]))
+                gridlabels.append('{} E'.format(mlon))
             except ApexHeightError as e:
                 continue
+
+        return gridlines, gridlabels
+
+
+
+    def map_ticks(self, ax, lines, labels):
+
+        xticks = []
+        yticks = []
+        xticklabels = []
+        yticklabels = []
+
+        for line, label in zip(lines,labels):
+            tick_locations = self.tick_location(ax,line)
+
+            if label.endswith('E') or label.endswith('W'):
+                xticks.extend(tick_locations['bottom'])
+                xticklabels.extend([label]*len(tick_locations['bottom']))
+
+            if label.endswith('N') or label.endswith('S'):
+                yticks.extend(tick_locations['left'])
+                yticklabels.extend([label]*len(tick_locations['left']))
+
+        return xticks, yticks, xticklabels, yticklabels
+
+
+    def tick_location(self,ax,line,edges_with_ticks=['left','bottom']):
+
+        # convert line from geodetic coordinates to map projection coordinates
+        line_map = ax.projection.transform_points(ccrs.Geodetic(),line[0],line[1]).T
+
+        # parameters specific for finding ticks on each edge of plot
+        edge_params = {'left':{'axis_i':0,'axis_d':1,'edge':ax.viewLim.x0,'bounds':[ax.viewLim.y0,ax.viewLim.y1]},
+                       'right':{'axis_i':0,'axis_d':1,'edge':ax.viewLim.x1,'bounds':[ax.viewLim.y0,ax.viewLim.y1]},
+                       'bottom':{'axis_i':1,'axis_d':0,'edge':ax.viewLim.y0,'bounds':[ax.viewLim.x0,ax.viewLim.x1]},
+                       'top':{'axis_i':1,'axis_d':0,'edge':ax.viewLim.y1,'bounds':[ax.viewLim.x0,ax.viewLim.x1]}}
+
+        # initialize empty dictionary to be returned wiht tick locations
+        tick_locations = {}
+
+        for e in edges_with_ticks:
+            axis = edge_params[e]['axis_i']
+            axisd = edge_params[e]['axis_d']
+            edge = edge_params[e]['edge']
+            bounds = edge_params[e]['bounds']
+            tick_locations[e] = []
+
+            # find indicies where the line crosses the edge
+            line_map_shift = line_map[axis]-edge
+            args = np.argwhere(line_map_shift[:-1]*line_map_shift[1:]<0).flatten()
+
+            # for each crossing, interpolate to edge to find the tick location
+            for a in args:
+                l = line_map[0:2,a:a+2]
+                l = l[:,l[axis].argsort()]
+
+                tick = np.interp(edge,l[axis],l[axisd])
+                # if tick is located within the plot, add it to list of tick locations
+                if tick>bounds[0] and tick<bounds[1]:
+                    tick_locations[e].append(tick)
+
+        return tick_locations
+
 
 
     # functions for plotting based on different methods

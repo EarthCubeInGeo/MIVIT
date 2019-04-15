@@ -51,8 +51,8 @@ def test():
         longitude = file['/Data/Array Layout/glon'][:]
         tec = file['/Data/Array Layout/2D Parameters/tec'][:,:,i]
     Lon, Lat = np.meshgrid(longitude,latitude)
-    tec1 = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='jet',plot_type='contourf', instrument='GPS', parameter='TEC', plot_kwargs={'alpha':0.2, 'levels':25})
-    tec2 = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='jet',plot_type='contour', instrument='GPS', parameter='TEC', plot_kwargs={'levels':25})
+    tec1 = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='terrain',plot_type='contourf', instrument='GPS', parameter='TEC', plot_kwargs={'alpha':0.2, 'levels':25})
+    tec2 = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='terrain',plot_type='contour', instrument='GPS', parameter='TEC', plot_kwargs={'levels':25})
 
 
 
