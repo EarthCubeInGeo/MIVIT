@@ -8,6 +8,9 @@ import cartopy.crs as ccrs
 from mangopy.mosaic import Mosaic
 from davitpy import pydarn
 import davitpy.pydarn.sdio
+import madrigalWeb.madrigalWeb
+import configparser
+import os
 from mivit import DataSet, Visualize
 
 
@@ -42,8 +45,32 @@ def test():
 
 
 
+
+
+    # madrigalWeb test
+    config = configparser.ConfigParser()
+    config.read('config.ini')
+    user_fullname = config.get('DEFAULT', 'MADRIGAL_FULLNAME')
+    user_email = config.get('DEFAULT', 'MADRIGAL_EMAIL')
+    user_affiliation = config.get('DEFAULT', 'MADRIGAL_AFFILIATION')
+
+
+
     # get GPS TEC
-    filename = './TestDataSets/gps170528g.004.hdf5'
+    test =  madrigalWeb.madrigalWeb.MadrigalData('http://cedar.openmadrigal.org/')
+    instrument_code = 8000
+    file_code = 3500
+    expList = test.getExperiments(instrument_code, 2017, 5, 28, 5, 0, 0, 2017, 5, 28, 6, 0, 0)
+    fileList = test.getExperimentFiles(expList[0].id)
+    datafile = [file.name for file in fileList if file.kindat==file_code][0]
+    filename = './TestDataSets/'+datafile.split('/')[-1]
+
+    # if file does not exist, download it
+    while not os.path.exists(filename):
+        print 'DOWNLOADING '+filename
+        test.downloadFile(datafile,filename, user_fullname, user_email, user_affiliation, 'hdf5')
+
+
     with h5py.File(filename,'r') as file:
         tstmp = file['/Data/Array Layout/timestamps'][:]
         i = target_index(targtime,tstmp)
@@ -56,8 +83,23 @@ def test():
 
 
 
+
     # get Millstone Hill data
-    filename = './TestDataSets/mlh170608k.004.hdf5'
+    instrument_code = 30
+    file_code = 3430
+
+    test =  madrigalWeb.madrigalWeb.MadrigalData('http://millstonehill.haystack.mit.edu/')
+    expList = test.getExperiments(instrument_code, 2017, 6, 8, 0, 0, 0, 2017, 6, 9, 0, 0, 0)
+    fileList = test.getExperimentFiles(expList[0].id)
+    datafile = [file.name for file in fileList if file.kindat==file_code][0]
+    filename = './TestDataSets/'+datafile.split('/')[-1]
+
+    # if file does not exist, download it
+    while not os.path.exists(filename):
+        print 'DOWNLOADING '+filename
+        test.downloadFile(datafile,filename, user_fullname, user_email, user_affiliation, 'hdf5')
+
+    # get Millstone Hill data
     with h5py.File(filename, 'r') as file:
         idx = 36
         tstmp = file['/Data/Array Layout/Array with kinst=31.0 and mdtyp=115.0 and pl=0.00048 /timestamps'][idx]
