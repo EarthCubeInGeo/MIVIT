@@ -5,13 +5,10 @@ import numpy as np
 import datetime as dt
 import h5py
 import cartopy.crs as ccrs
-from mangopy.mosaic import Mosaic
-from davitpy import pydarn
-import davitpy.pydarn.sdio
-import madrigalWeb.madrigalWeb
 import configparser
-import os
 from mivit import DataSet, Visualize
+import helper
+import copy
 
 
 
@@ -22,126 +19,47 @@ def test():
     sdtime = dt.datetime(2016,10,1,17,0)
     sd_data = []
     for rad in ['sas','kap','pgr']:
-        sdptr = pydarn.sdio.radDataOpen(sdtime,rad,src='local',fileType='fitex',local_dirfmt='./TestDataSets/SuperDARN/')
-        scan = sdptr.readScan()
-
-        site = pydarn.radar.site(radId=scan[0].stid,dt=scan[0].time)
-        fov = pydarn.radar.radFov.fov(site=site,rsep=scan[0].prm.rsep,ngates=scan[0].prm.nrang+1,nbeams=site.maxbeam,coords='geo',date_time=scan[0].time)
-
-        velocity = np.full(fov.latCenter.shape,np.nan)
-        for beam in scan:
-            for k, r in enumerate(beam.fit.slist):
-                velocity[beam.bmnum,r] = beam.fit.v[k]
-        # sd_data.append(DataSet(longitude=np.array(fov.lonCenter),latitude=np.array(fov.latCenter),values=np.array(velocity),cmap='bwr',instrument='SuperDARN '+rad.upper(), parameter='Velocity',plot_kwargs={'s':30,'vmin':-40,'vmax':40}))
-        sd_data.append(DataSet(longitude=np.array(fov.lonFull),latitude=np.array(fov.latFull),values=np.array(velocity),cmap='bwr',plot_type='pcolormesh',instrument='SuperDARN '+rad.upper(), parameter='Velocity',plot_kwargs={'vmin':-40,'vmax':40}))
-
+        sd_data.append(helper.SuperDARN_dataset(sdtime,rad))
 
 
     # get mango data
     targtime = dt.datetime(2017,5,28,5,35)
-    m = Mosaic()
-    mosaic, mosaic_lat, mosaic_lon = m.create_mosaic(targtime)
-    mango = DataSet(longitude=mosaic_lon,latitude=mosaic_lat,values=mosaic,cmap='gist_gray',plot_type='pcolormesh', instrument='MANGO', parameter='Brightness')
+    mango = helper.MANGO_dataset(targtime)
 
 
 
 
-
-    # madrigalWeb test
+    # set up madrigalWeb credentials
     config = configparser.ConfigParser()
     config.read('config.ini')
     user_fullname = config.get('DEFAULT', 'MADRIGAL_FULLNAME')
     user_email = config.get('DEFAULT', 'MADRIGAL_EMAIL')
     user_affiliation = config.get('DEFAULT', 'MADRIGAL_AFFILIATION')
+    user_info = {'fullname':user_fullname,'email':user_email,'affiliation':user_affiliation}
 
 
 
     # get GPS TEC
-    test =  madrigalWeb.madrigalWeb.MadrigalData('http://cedar.openmadrigal.org/')
-    instrument_code = 8000
-    file_code = 3500
-    expList = test.getExperiments(instrument_code, 2017, 5, 28, 5, 0, 0, 2017, 5, 28, 6, 0, 0)
-    fileList = test.getExperimentFiles(expList[0].id)
-    datafile = [file.name for file in fileList if file.kindat==file_code][0]
-    filename = './TestDataSets/'+datafile.split('/')[-1]
-
-    # if file does not exist, download it
-    while not os.path.exists(filename):
-        print 'DOWNLOADING '+filename
-        test.downloadFile(datafile,filename, user_fullname, user_email, user_affiliation, 'hdf5')
-
-
-    with h5py.File(filename,'r') as file:
-        tstmp = file['/Data/Array Layout/timestamps'][:]
-        i = target_index(targtime,tstmp)
-        latitude = file['/Data/Array Layout/gdlat'][:]
-        longitude = file['/Data/Array Layout/glon'][:]
-        tec = file['/Data/Array Layout/2D Parameters/tec'][:,:,i]
-    Lon, Lat = np.meshgrid(longitude,latitude)
-    tec1 = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='terrain',plot_type='contourf', instrument='GPS', parameter='TEC', plot_kwargs={'alpha':0.2, 'levels':25})
-    tec2 = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='terrain',plot_type='contour', instrument='GPS', parameter='TEC', plot_kwargs={'levels':25})
-
+    tec1 = helper.GPSTEC_dataset(targtime,user_info)
+    tec2 = copy.copy(tec1)
+    tec2.plot_type='contour'
+    tec2.plot_kwargs={'levels':tec1.plot_kwargs['levels']}
 
 
 
     # get Millstone Hill data
-    instrument_code = 30
-    file_code = 3430
-
-    test =  madrigalWeb.madrigalWeb.MadrigalData('http://millstonehill.haystack.mit.edu/')
-    expList = test.getExperiments(instrument_code, 2017, 6, 8, 0, 0, 0, 2017, 6, 9, 0, 0, 0)
-    fileList = test.getExperimentFiles(expList[0].id)
-    datafile = [file.name for file in fileList if file.kindat==file_code][0]
-    filename = './TestDataSets/'+datafile.split('/')[-1]
-
-    # if file does not exist, download it
-    while not os.path.exists(filename):
-        print 'DOWNLOADING '+filename
-        test.downloadFile(datafile,filename, user_fullname, user_email, user_affiliation, 'hdf5')
-
-    # get Millstone Hill data
-    with h5py.File(filename, 'r') as file:
-        idx = 36
-        tstmp = file['/Data/Array Layout/Array with kinst=31.0 and mdtyp=115.0 and pl=0.00048 /timestamps'][idx]
-        rangegate = file['/Data/Array Layout/Array with kinst=31.0 and mdtyp=115.0 and pl=0.00048 /range'][:]
-        azimuth = file['/Data/Array Layout/Array with kinst=31.0 and mdtyp=115.0 and pl=0.00048 /1D Parameters/az1'][idx]
-        elevation = file['/Data/Array Layout/Array with kinst=31.0 and mdtyp=115.0 and pl=0.00048 /1D Parameters/el1'][idx]
-        density = file['/Data/Array Layout/Array with kinst=31.0 and mdtyp=115.0 and pl=0.00048 /2D Parameters/ne'][:,idx]
-    mlh = DataSet(values=density, site=[42.62,-71.49,0.0], azimuth=azimuth, elevation=elevation, ranges=rangegate, cmap='jet', instrument='Millstone Hill ISR', parameter='Ne')
-
+    mlhtime = dt.datetime(2017,6,8,3,0,0)
+    mlh = helper.MLHISR_dataset(mlhtime, user_info)
 
     # get Millston Hill FPI data
-    filename = './TestDataSets/kfp170527g.7110.hdf5'
-    with h5py.File(filename, 'r') as file:
-        tstmp = file['/Data/Table Layout']['ut1_unix'][60:65]
-        Tn = file['/Data/Table Layout']['tn'][60:65]
-        azimuth = file['/Data/Table Layout']['azm'][60:65]
-        elevation = file['/Data/Table Layout']['elm'][60:65]
-        altitude = file['/Data/Table Layout']['alte'][60:65]
-
-    times = np.array([dt.datetime.utcfromtimestamp(t) for t in tstmp])
-    mlh_fpi = DataSet(values=Tn, site=[42.62,-71.49,0.0], azimuth=azimuth, elevation=elevation, altitude=altitude, cmap='cool', instrument='Millstone Hill FPI', parameter='Tn')
-
-
-    # get Millston Hill vector FPI data
-    filename = './TestDataSets/kfp170527g.7111.hdf5'
-    with h5py.File(filename, 'r') as file:
-        tstmp = file['/Data/Table Layout']['ut1_unix'][50]
-        ve = file['/Data/Table Layout']['vn1'][50]
-        vn = file['/Data/Table Layout']['vn2'][49]
-        latitude = file['/Data/Table Layout']['gdlat'][50]
-        longitude = file['/Data/Table Layout']['glon'][50]
-        altitude = file['/Data/Table Layout']['alte'][50]
-    time = dt.datetime.utcfromtimestamp(tstmp)
-    mlh_fpi_vec = DataSet(values=np.array([np.array([ve]),np.array([vn]),np.array([0.])]), latitude=np.array([latitude]), longitude=np.array([longitude]), altitude=np.array([altitude]), plot_type='quiver', instrument='Millstone Hill FPI', parameter='Vn')
-
-
+    mlh_fpi = helper.MLHFPI_dataset(mlhtime, user_info)
+    mlh_fpi_vec = helper.MLHFPIvec_dataset(mlhtime, user_info)
 
 
 
     plot = Visualize([mango,tec1,tec2,mlh,mlh_fpi,mlh_fpi_vec]+sd_data, map_features=['gridlines','coastlines','mag_gridlines'])
     plot.one_map()
-    plot.multi_map()
+    # plot.multi_map()
 
 
 
