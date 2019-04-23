@@ -5,9 +5,9 @@ import davitpy.pydarn.sdio
 import numpy as np
 from mivit import DataSet
 
-def SuperDARN_dataset(targtime,radar):
+def SuperDARN_dataset(targtime,radar, davitpy_kwargs=None):
 
-    sdptr = pydarn.sdio.radDataOpen(targtime,radar,src='local',fileType='fitex',local_dirfmt='./TestDataSets/SuperDARN/')
+    sdptr = pydarn.sdio.radDataOpen(targtime,radar,**davitpy_kwargs)
     scan = sdptr.readScan()
 
     site = pydarn.radar.site(radId=scan[0].stid,dt=scan[0].time)
