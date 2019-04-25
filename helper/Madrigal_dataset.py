@@ -24,6 +24,55 @@ def GPSTEC_dataset(targtime, user_info):
     dataset = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='terrain',plot_type='contourf', instrument='GPS', parameter='TEC', plot_kwargs={'alpha':0.2, 'levels':25})
     return dataset
 
+def PFISR_dataset(targtime, user_info):
+
+    instrument_code = 61
+    file_code = 5950
+
+    filename = identify_file(targtime,instrument_code,file_code, user_info)
+    print filename
+
+    rangegate = []
+    azimuth = []
+    elevation = []
+    density = []
+
+    # import visuamisr
+    # data = visuamisr.read_data(filename)
+    with h5py.File(filename, 'r') as file:
+        beams = file['Data/Array Layout']
+        for b in beams.keys():
+            tstmp = beams[b]['timestamps'][:]
+            idx = target_index(targtime,tstmp)
+            print idx
+
+            r = beams[b]['range'][:]
+            print r, r.shape
+            az = beams[b]['1D Parameters/azm'][idx]
+            el = beams[b]['1D Parameters/elm'][idx]
+            d = beams[b]['2D Parameters/nel'][:,idx]
+            print type(r)
+
+            rangegate.append(r)
+            azimuth.append(az)
+            elevation.append(el)
+            density.append(d)
+
+        site = file['/Metadata/Experiment Parameters']['value'][8:11]
+        site = [float(s) for s in site]
+
+    rangegate = np.stack(rangegate)
+    # azimuth = np.array(azimuth)
+    # elevation = np.array(elevation)
+    # density = np.array(density)
+
+    # print rangegate.shape, azimuth.shape, elevation.shape, density.shape
+    print rangegate, rangegate.shape
+
+
+    dataset = DataSet(values=density, site=site, azimuth=azimuth, elevation=elevation, ranges=rangegate, cmap='jet', instrument='PFISR', parameter='Ne')
+    return dataset
+
 def MLHISR_dataset(targtime, user_info):
 
     instrument_code = 30
