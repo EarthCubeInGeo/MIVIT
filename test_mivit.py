@@ -3,8 +3,6 @@
 
 import numpy as np
 import datetime as dt
-import h5py
-import cartopy.crs as ccrs
 import configparser
 from mivit import DataSet, Visualize
 import helper
@@ -18,8 +16,9 @@ def test():
     # get SuperDARN data
     sdtime = dt.datetime(2016,10,1,17,0)
     sd_data = []
+    davitpy_kwargs = {'src':'local','fileType':'fitex','local_dirfmt':'./TestDataSets/SuperDARN/'}
     for rad in ['sas','kap','pgr']:
-        sd_data.append(helper.SuperDARN_dataset(sdtime,rad))
+        sd_data.append(helper.SuperDARN_dataset(sdtime,rad,davitpy_kwargs=davitpy_kwargs))
 
 
     # get mango data
@@ -41,6 +40,7 @@ def test():
 
     # get GPS TEC
     tec1 = helper.GPSTEC_dataset(targtime,user_info)
+    tec1.plot_kwargs = {'alpha':0.2, 'levels':25,'vmin':0,'vmax':20}
     tec2 = copy.copy(tec1)
     tec2.plot_type='contour'
     tec2.plot_kwargs={'levels':tec1.plot_kwargs['levels']}
@@ -57,7 +57,7 @@ def test():
 
 
 
-    plot = Visualize([mango,tec1,tec2,mlh,mlh_fpi,mlh_fpi_vec]+sd_data, map_features=['gridlines','coastlines','mag_gridlines'])
+    plot = Visualize([mango,tec1,tec2,mlh,mlh_fpi,mlh_fpi_vec]+sd_data, map_features=['gridlines','coastlines','mag_gridlines'], map_extent=[-135,-65,20,50], map_proj='LambertConformal', map_proj_kwargs={'central_longitude':-100,'central_latitude':35})
     plot.one_map()
     # plot.multi_map()
 

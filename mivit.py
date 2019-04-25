@@ -172,7 +172,7 @@ class DataSet(object):
 
 
 class Visualize(object):
-    def __init__(self,dataset_list,map_features=['gridlines','coastlines']):
+    def __init__(self,dataset_list,map_features=['gridlines','coastlines'],map_extent=None,map_proj='PlateCarree',map_proj_kwargs={}):
         self.dataset_list = dataset_list
 
         # define plot methods dictionary
@@ -180,6 +180,9 @@ class Visualize(object):
         self.no_colorbar = ['quiver','contour']
 
         self.map_features = map_features
+        self.map_extent = map_extent
+
+        self.map_proj = getattr(ccrs,map_proj)(**map_proj_kwargs)
 
 
 
@@ -188,8 +191,7 @@ class Visualize(object):
         fig = plt.figure(figsize=(15,10))
         gs = gridspec.GridSpec(2,1,height_ratios=[3,1])
         gs.update(left=0.01,right=0.99,top=0.99,bottom=0.1,hspace=0.04)
-        map_proj = ccrs.LambertConformal(central_longitude=-110.,central_latitude=40.0)
-        ax = plt.subplot(gs[0],projection=map_proj)
+        ax = plt.subplot(gs[0],projection=self.map_proj)
         # set up background gridlines, coastlines, ect on map
         self.map_setup(ax)
 
@@ -216,10 +218,9 @@ class Visualize(object):
         fig = plt.figure(figsize=(10,10))
         gs = gridspec.GridSpec(int(np.ceil(len(self.dataset_list)/2.)),2)
         gs.update(left=0.01,right=0.9,wspace=0.2,hspace=0.01)
-        map_proj = ccrs.LambertConformal(central_longitude=-110.,central_latitude=40.)
 
         for n, dataset in enumerate(self.dataset_list):
-            ax = plt.subplot(gs[n],projection=map_proj)
+            ax = plt.subplot(gs[n],projection=self.map_proj)
             # set up background gridlines, coastlines, ect on map
             self.map_setup(ax)
 
@@ -234,7 +235,8 @@ class Visualize(object):
 
     def map_setup(self, ax):
 
-        ax.set_extent([230,285,25,55])
+        if self.map_extent:
+            ax.set_extent(self.map_extent,crs=ccrs.Geodetic())
         xticks = []
         yticks = []
         xticklabels = []
@@ -243,8 +245,10 @@ class Visualize(object):
         ytickcolor = []
 
         if 'gridlines' in self.map_features:
-            latlines = range(20,80,10)
-            lonlines = range(200,330,30)
+            # latlines = range(20,80,10)
+            # lonlines = range(200,330,30)
+            latlines = range(-90,90,10)
+            lonlines = range(0,360,30)
             ax.gridlines(xlocs=lonlines,ylocs=latlines,crs=ccrs.Geodetic())
 
             gridlines = [np.array([np.linspace(0,360,100),np.full(100,lat)]) for lat in latlines] + [np.array([np.full(100,lon),np.linspace(-90,90,100)]) for lon in lonlines]
@@ -258,8 +262,10 @@ class Visualize(object):
             ytickcolor.extend(['black']*len(yt))
 
         if 'mag_gridlines' in self.map_features:
-            mlatlines = range(20,80,10)
-            mlonlines = range(300,390,30)
+            # mlatlines = range(20,80,10)
+            # mlonlines = range(300,390,30)
+            mlatlines = range(-90,90,10)
+            mlonlines = range(0,360,30)
             gridlines, gridlabels = self.magnetic_gridlines(ax,xlocs=mlonlines,ylocs=mlatlines)
             xt, yt, xtl, ytl = self.map_ticks(ax,gridlines,gridlabels)
             xticks.extend(xt)
@@ -339,6 +345,12 @@ class Visualize(object):
 
 
     def tick_location(self,ax,line,edges_with_ticks=['left','bottom']):
+
+        # # need do do something to solve the crossing dateline issue
+        # s = np.argwhere(line[0,1:]-line[0,:-1]<-180.)
+        # if s:
+        #     s = int(s.flatten()[0])+1
+        #     line = np.concatenate((line[:,s:],line[:,:s]),axis=1)
 
         # convert line from geodetic coordinates to map projection coordinates
         line_map = ax.projection.transform_points(ccrs.Geodetic(),line[0],line[1]).T
