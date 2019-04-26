@@ -21,8 +21,52 @@ def GPSTEC_dataset(targtime, user_info):
         longitude = file['/Data/Array Layout/glon'][:]
         tec = file['/Data/Array Layout/2D Parameters/tec'][:,:,i]
     Lon, Lat = np.meshgrid(longitude,latitude)
-    dataset = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='terrain',plot_type='contourf', instrument='GPS', parameter='TEC', plot_kwargs={'alpha':0.2, 'levels':25})
+    dataset = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='magma',plot_type='contourf', instrument='GPS', parameter='TEC', plot_kwargs={'alpha':0.2, 'levels':25})
     return dataset
+
+def DMSP_dataset(targtime, user_info):
+
+    instrument_code = 8100
+    # file_code = 10117
+
+    density = []
+    latitude = []
+    longitude = []
+    altitude = []
+
+    for file_code in range(10106,10119):
+
+        print file_code
+        try:
+            filename = identify_file(targtime,instrument_code,file_code, user_info)
+        except:
+            continue
+
+        with h5py.File(filename, 'r') as file:
+            tstmp = file['/Data/Table Layout']['ut1_unix'][:]
+            idx = target_index(targtime,tstmp)
+            dens = file['/Data/Table Layout']['ne'][idx-3000:idx+3000]
+            lat = file['/Data/Table Layout']['gdlat'][idx-3000:idx+3000]
+            lon = file['/Data/Table Layout']['glon'][idx-3000:idx+3000]
+            alt = file['/Data/Table Layout']['gdalt'][idx-3000:idx+3000]
+        density.extend(dens)
+        latitude.extend(lat)
+        longitude.extend(lon)
+        altitude.extend(alt)
+
+    print latitude
+
+    dataset = DataSet(values=np.array(density),latitude=np.array(latitude),longitude=np.array(longitude),altitude=np.array(altitude),cmap='jet',plot_type='scatter',instrument='DMSP',parameter='Ne')
+    # with h5py.File(filename,'r') as file:
+    #     tstmp = file['/Data/Array Layout/timestamps'][:]
+    #     i = target_index(targtime,tstmp)
+    #     latitude = file['/Data/Array Layout/gdlat'][:]
+    #     longitude = file['/Data/Array Layout/glon'][:]
+    #     tec = file['/Data/Array Layout/2D Parameters/tec'][:,:,i]
+    # Lon, Lat = np.meshgrid(longitude,latitude)
+    # dataset = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='magma',plot_type='contourf', instrument='GPS', parameter='TEC', plot_kwargs={'alpha':0.2, 'levels':25})
+    return dataset
+
 
 def PFISR_dataset(targtime, user_info):
 
@@ -139,9 +183,13 @@ def identify_file(t,instrument_code,file_code, user):
     test =  madrigalWeb.madrigalWeb.MadrigalData('http://cedar.openmadrigal.org/')
 
     # find experiments on day in question
-    expList = test.getExperiments(instrument_code, t.year, t.month, t.day, 0, 0, 1, t.year, t.month, t.day, 23, 59, 59)
+    expList = test.getExperiments(instrument_code, t.year, t.month, t.day, 0, 0, 0, t.year, t.month, t.day, 23, 59, 59)
+    ID = [exp.id for exp in expList if t>=dt.datetime(exp.startyear,exp.startmonth,exp.startday,exp.starthour,exp.startmin,exp.startsec) and t<dt.datetime(exp.endyear,exp.endmonth,exp.endday,exp.endhour,exp.endmin,exp.endsec)][0]
     # find files associated with experiment
-    fileList = test.getExperimentFiles(expList[0].id)
+    fileList = test.getExperimentFiles(ID)
+    # print ID, fileList
+    # for file in fileList:
+    #     print file.kindat
     # find files of the correct type (correct file code)
     datafile = [file.name for file in fileList if file.kindat==file_code][0]
 
