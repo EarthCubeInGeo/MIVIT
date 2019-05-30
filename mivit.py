@@ -9,9 +9,45 @@ from apexpy import Apex
 from apexpy.apex import ApexHeightError
 
 
+class PlotType(object):
+    def __init__(self,**kwargs):
+        '''
+        REQUIRED:
+        plot_type
+        OPTIONAL:
+        cmap
+        vmin/vmax
+        plot label
+        point size (for scatter)
+        line thickness
+        Other matplotib kwargs?
+        '''
+        # assign defaults
+        self.plot_type = 'scatter'
+        self.plot_kwargs = {}
+        # assign input arguments
+        self.__dict__.update(kwargs)
+
+        # add the colormap to the plot_kwargs dict
+        try:
+            self.plot_kwargs['cmap'] = plt.get_cmap(self.cmap)
+        except AttributeError:
+            self.plot_kwargs['cmap'] = plt.get_cmap('jet')
+
+
 class DataSet(object):
     def __init__(self,**kwargs):
         '''
+        Can be initialized with EITHER:
+        latitude, longitude, altitude
+        OR
+        site, azimuth, elevation, ranges
+        MUST HAVE
+        values
+        OPTIONAL
+        name
+        units
+
             Valid keyword inputs:
             longitude
             latitude
@@ -27,17 +63,18 @@ class DataSet(object):
             plot_type
             plot_kwargs
         '''
-        # assign defaults
-        self.plot_type = 'scatter'
-        self.plot_kwargs = {}
+        # # assign defaults
+        # self.plot_type = 'scatter'
+        # self.plot_kwargs = {}
+
         # assign input arguments
         self.__dict__.update(kwargs)
 
-        # add the colormap to the plot_kwargs dict
-        try:
-            self.plot_kwargs['cmap'] = plt.get_cmap(self.cmap)
-        except AttributeError:
-            self.plot_kwargs['cmap'] = plt.get_cmap('jet')
+        # # add the colormap to the plot_kwargs dict
+        # try:
+        #     self.plot_kwargs['cmap'] = plt.get_cmap(self.cmap)
+        # except AttributeError:
+        #     self.plot_kwargs['cmap'] = plt.get_cmap('jet')
 
         # parameters defining the ellipsoid earth (from WGS84)
         self.Req = 6378137.
@@ -196,7 +233,8 @@ class Visualize(object):
         self.map_setup(ax)
 
         # define colorbar axes
-        num_cbar = len([0 for dataset in self.dataset_list if dataset.plot_type not in self.no_colorbar])
+        # num_cbar = len([0 for dataset in self.dataset_list if dataset.plot_type not in self.no_colorbar])
+        num_cbar = 4
         if num_cbar > 4:
             gs_cbar = gridspec.GridSpecFromSubplotSpec(int(np.ceil(num_cbar/2.)),2,subplot_spec=gs[1],hspace=50*gs.hspace,wspace=0.1)
         else:
@@ -205,11 +243,11 @@ class Visualize(object):
 
         # plot image on map
         for dataset in self.dataset_list:
-            f = self.plot_methods[dataset.plot_type](ax,dataset)
-            if dataset.plot_type not in self.no_colorbar:
-                cbar = fig.colorbar(f,cax=plt.subplot(gs_cbar[cbn]),orientation='horizontal')
-                cbar.set_label('{} {}'.format(dataset.instrument,dataset.parameter))
-                cbn+=1
+            f = self.plot_methods[dataset.plot_type.plot_type](ax,dataset)
+            # if dataset.plot_type not in self.no_colorbar:
+            #     cbar = fig.colorbar(f,cax=plt.subplot(gs_cbar[cbn]),orientation='horizontal')
+            #     cbar.set_label('{} {}'.format(dataset.instrument,dataset.parameter))
+            #     cbn+=1
 
         plt.savefig('mivit_test.png')
         plt.show()
@@ -392,36 +430,36 @@ class Visualize(object):
 
     # functions for plotting based on different methods
     def plot_scatter(self,ax,dataset):
-        if 's' not in dataset.plot_kwargs:
-            dataset.plot_kwargs['s'] = 100*np.exp(-0.03*dataset.values.size)+0.1
-        f = ax.scatter(dataset.longitude, dataset.latitude, c=dataset.values, transform=ccrs.Geodetic(), **dataset.plot_kwargs)
+        if 's' not in dataset.plot_type.plot_kwargs:
+            dataset.plot_type.plot_kwargs['s'] = 100*np.exp(-0.03*dataset.values.size)+0.1
+        f = ax.scatter(dataset.longitude, dataset.latitude, c=dataset.values, transform=ccrs.Geodetic(), **dataset.plot_type.plot_kwargs)
         return f
 
     def plot_pcolormesh(self,ax,dataset):
-        f = ax.pcolormesh(dataset.longitude, dataset.latitude, dataset.values, transform=ccrs.PlateCarree(), **dataset.plot_kwargs)
+        f = ax.pcolormesh(dataset.longitude, dataset.latitude, dataset.values, transform=ccrs.PlateCarree(), **dataset.plot_type.plot_kwargs)
         return f
 
     def plot_contour(self,ax,dataset):
         try:
-            levels = dataset.plot_kwargs['levels']
-            del dataset.plot_kwargs['levels']
+            levels = dataset.plot_type.plot_kwargs['levels']
+            del dataset.plot_type.plot_kwargs['levels']
         except KeyError:
             levels = 20
-        f = ax.contour(dataset.longitude, dataset.latitude, dataset.values, levels, transform=ccrs.PlateCarree(), **dataset.plot_kwargs)
+        f = ax.contour(dataset.longitude, dataset.latitude, dataset.values, levels, transform=ccrs.PlateCarree(), **dataset.plot_type.plot_kwargs)
         ax.clabel(f,inline=1,fontsize=8,fmt='%1.1f')
         return f
 
     def plot_contourf(self,ax,dataset):
         try:
-            levels = dataset.plot_kwargs['levels']
-            del dataset.plot_kwargs['levels']
+            levels = dataset.plot_type.plot_kwargs['levels']
+            del dataset.plot_type.plot_kwargs['levels']
         except KeyError:
             levels = 20
-        f = ax.contourf(dataset.longitude, dataset.latitude, dataset.values, levels, transform=ccrs.PlateCarree(), **dataset.plot_kwargs)
+        f = ax.contourf(dataset.longitude, dataset.latitude, dataset.values, levels, transform=ccrs.PlateCarree(), **dataset.plot_type.plot_kwargs)
         return f
 
     def plot_quiver(self,ax,dataset):
-        f = ax.quiver(dataset.longitude, dataset.latitude, dataset.values[0], dataset.values[1],transform=ccrs.PlateCarree(), **dataset.plot_kwargs)
+        f = ax.quiver(dataset.longitude, dataset.latitude, dataset.values[0], dataset.values[1],transform=ccrs.PlateCarree(), **dataset.plot_type.plot_kwargs)
         return f
 
 
