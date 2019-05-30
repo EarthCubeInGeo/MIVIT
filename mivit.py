@@ -190,7 +190,7 @@ class Visualize(object):
         # set up map
         fig = plt.figure(figsize=(15,10))
         gs = gridspec.GridSpec(2,1,height_ratios=[3,1])
-        gs.update(left=0.01,right=0.99,top=0.99,bottom=0.1,hspace=0.04)
+        gs.update(left=0.01,right=0.99,top=0.99,bottom=0.1,hspace=0.1)
         ax = plt.subplot(gs[0],projection=self.map_proj)
         # set up background gridlines, coastlines, ect on map
         self.map_setup(ax)
@@ -211,6 +211,7 @@ class Visualize(object):
                 cbar.set_label('{} {}'.format(dataset.instrument,dataset.parameter))
                 cbn+=1
 
+        plt.savefig('mivit_test.png')
         plt.show()
 
     def multi_map(self):
@@ -420,7 +421,7 @@ class Visualize(object):
         return f
 
     def plot_quiver(self,ax,dataset):
-        f = ax.quiver(dataset.longitude, dataset.latitude, dataset.values[0], dataset.values[1],transform=ccrs.PlateCarree())
+        f = ax.quiver(dataset.longitude, dataset.latitude, dataset.values[0], dataset.values[1],transform=ccrs.PlateCarree(), **dataset.plot_kwargs)
         return f
 
 

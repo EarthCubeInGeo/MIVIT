@@ -138,10 +138,12 @@ def MLHISR_dataset(targtime, user_info):
     dataset = DataSet(values=density, site=site, azimuth=azimuth, elevation=elevation, ranges=rangegate, cmap='jet', instrument='Millstone Hill ISR', parameter='Ne')
     return dataset
 
-def MLHFPI_dataset(targtime, user_info):
+def MLHFPI_dataset(targtime, line, user_info):
+
+    file_codes = {'red':7100,'green':7110}
 
     instrument_code = 5360
-    file_code = 7100
+    file_code = file_codes[line]
 
     filename = identify_file(targtime,instrument_code,file_code, user_info)
 
@@ -158,10 +160,12 @@ def MLHFPI_dataset(targtime, user_info):
     dataset = DataSet(values=Tn, site=site, azimuth=azimuth, elevation=elevation, altitude=altitude, cmap='cool', instrument='Millstone Hill FPI', parameter='Tn')
     return dataset
 
-def MLHFPIvec_dataset(targtime, user_info):
+def MLHFPIvec_dataset(targtime, line, user_info):
+
+    file_codes = {'red':7101,'green':7111}
 
     instrument_code = 5360
-    file_code = 7101
+    file_code = file_codes[line]
 
     filename = identify_file(targtime,instrument_code,file_code, user_info)
 
@@ -174,7 +178,7 @@ def MLHFPIvec_dataset(targtime, user_info):
         longitude = file['/Data/Table Layout']['glon'][idx]
         altitude = file['/Data/Table Layout']['alte'][idx]
     # time = dt.datetime.utcfromtimestamp(tstmp)
-    dataset = DataSet(values=np.array([np.array([ve]),np.array([vn]),np.array([0.])]), latitude=np.array([latitude]), longitude=np.array([longitude]), altitude=np.array([altitude]), plot_type='quiver', instrument='Millstone Hill FPI', parameter='Vn')
+    dataset = DataSet(values=np.array([np.array([ve]),np.array([vn]),np.array([0.])]), latitude=np.array([latitude]), longitude=np.array([longitude]), altitude=np.array([altitude]), plot_type='quiver', instrument='Millstone Hill FPI', parameter='Vn', plot_kwargs={'width':0.002})
     return dataset
 
 def identify_file(t,instrument_code,file_code, user):
