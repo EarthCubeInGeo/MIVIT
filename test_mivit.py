@@ -14,7 +14,7 @@ def test():
 
 
     # get SuperDARN data
-    pt = PlotType(cmap='seismic',plot_type='pcolormesh',label='SuperDARN Velocity',plot_kwargs={'vmin':-40,'vmax':40})
+    pt = PlotType(cmap='seismic',plot_type='pcolormesh',label='SuperDARN Velocity',vmin=-40,vmax=40)
     sdtime = dt.datetime(2017,5,28,5,35)
     sd_data = []
     davitpy_kwargs = {'src':'local','fileType':'fitex','local_dirfmt':'./TestDataSets/SuperDARN/'}

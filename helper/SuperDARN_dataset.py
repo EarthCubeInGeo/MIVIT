@@ -5,7 +5,7 @@ import davitpy.pydarn.sdio
 import numpy as np
 from mivit import DataSet
 
-def SuperDARN_dataset(targtime,radar, davitpy_kwargs=None):
+def SuperDARN_dataset(targtime,radar, plot_type=None, davitpy_kwargs=None):
 
 
     sdptr = pydarn.sdio.radDataOpen(targtime,radar,**davitpy_kwargs)
@@ -19,5 +19,7 @@ def SuperDARN_dataset(targtime,radar, davitpy_kwargs=None):
         for k, r in enumerate(beam.fit.slist):
             velocity[beam.bmnum,r] = beam.fit.v[k]
 
-    dataset = DataSet(longitude=np.array(fov.lonFull),latitude=np.array(fov.latFull),values=np.array(velocity),cmap='seismic',plot_type='pcolormesh',instrument='SuperDARN '+radar.upper(), parameter='Velocity',plot_kwargs={'vmin':-40,'vmax':40})
+    # dataset = DataSet(longitude=np.array(fov.lonFull),latitude=np.array(fov.latFull),values=np.array(velocity),cmap='seismic',plot_type='pcolormesh',instrument='SuperDARN '+radar.upper(), parameter='Velocity',plot_kwargs={'vmin':-40,'vmax':40})
+    dataset = DataSet(longitude=np.array(fov.lonFull),latitude=np.array(fov.latFull),values=np.array(velocity), plot_type=plot_type)
+
     return dataset
