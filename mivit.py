@@ -40,6 +40,8 @@ class PlotType(object):
         self.plot_type = kwargs['plot_type']
         del kwargs['plot_type']
 
+        self.label = kwargs['label']
+
         self.plot_kwargs = kwargs
 
 
@@ -232,22 +234,25 @@ class Visualize(object):
         # set up background gridlines, coastlines, ect on map
         self.map_setup(ax)
 
+        # plot image on map
+        for dataset in self.dataset_list:
+            f = self.plot_methods[dataset.plot_type.plot_type](ax,dataset)
+
+        # get list of unique colorbars
+        colorbars = set([dataset.plot_type for dataset in self.dataset_list])
         # define colorbar axes
-        # num_cbar = len([0 for dataset in self.dataset_list if dataset.plot_type not in self.no_colorbar])
-        num_cbar = 4
+        num_cbar = len(colorbars)
         if num_cbar > 4:
             gs_cbar = gridspec.GridSpecFromSubplotSpec(int(np.ceil(num_cbar/2.)),2,subplot_spec=gs[1],hspace=50*gs.hspace,wspace=0.1)
         else:
             gs_cbar = gridspec.GridSpecFromSubplotSpec(num_cbar,1,subplot_spec=gs[1],hspace=50*gs.hspace,wspace=0.1)
-        cbn = 0
 
-        # plot image on map
-        for dataset in self.dataset_list:
-            f = self.plot_methods[dataset.plot_type.plot_type](ax,dataset)
-            # if dataset.plot_type not in self.no_colorbar:
-            #     cbar = fig.colorbar(f,cax=plt.subplot(gs_cbar[cbn]),orientation='horizontal')
-            #     cbar.set_label('{} {}'.format(dataset.instrument,dataset.parameter))
-            #     cbn+=1
+        # create each colorbar on plot
+        for i, cb in enumerate(colorbars):
+            sm = plt.cm.ScalarMappable(cmap=cb.plot_kwargs['cmap'],norm=plt.Normalize(vmin=cb.plot_kwargs['vmin'],vmax=cb.plot_kwargs['vmax']))
+            sm._A = []
+            cbar = plt.colorbar(sm, orientation='horizontal', cax=plt.subplot(gs_cbar[i]))
+            cbar.set_label(cb.label)
 
         plt.savefig('mivit_test.png')
         plt.show()

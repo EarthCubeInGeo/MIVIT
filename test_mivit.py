@@ -23,7 +23,7 @@ def test():
 
 
     # get mango data
-    pt = PlotType(cmap='gist_gray',plot_type='pcolormesh', label='MANGO')
+    pt = PlotType(cmap='gist_gray',plot_type='pcolormesh', label='MANGO', vmin=0, vmax=255)
     targtime = dt.datetime(2017,5,28,5,35)
     mangopy_kwargs = {'datadir':'./TestDataSets/MANGO'}
     mango = helper.MANGO_dataset(targtime,mangopy_kwargs=mangopy_kwargs,plot_type=pt)
