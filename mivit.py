@@ -9,7 +9,22 @@ from apexpy import Apex
 from apexpy.apex import ApexHeightError
 
 
-class PlotType(object):
+class DataVisualization(object):
+    def __init__(self, dataset, plotmethods):
+        '''
+        dataset: a DataSet object
+        plotmethods: either a single PlotMethod object or a list of PlotMethod objects
+            describing different ways the dataset should be visualized
+        '''
+        self.dataset = dataset
+
+        if isinstance(plotmethods, list):
+            self.plotmethods = plotmethods
+        else:
+            self.plotmethods = [plotmethods]
+
+
+class PlotMethod(object):
     def __init__(self,**kwargs):
         '''
         REQUIRED:
@@ -41,6 +56,7 @@ class PlotType(object):
         del kwargs['plot_type']
 
         self.label = kwargs['label']
+        del kwargs['label']
 
         self.plot_kwargs = kwargs
 
@@ -77,6 +93,9 @@ class DataSet(object):
 
         # assign input arguments
         self.__dict__.update(kwargs)
+
+        # if not isinstance(self.plot_type, list):
+        #     self.plot_type = [self.plot_type]
 
         # parameters defining the ellipsoid earth (from WGS84)
         self.Req = 6378137.
@@ -211,8 +230,8 @@ class DataSet(object):
 
 
 class Visualize(object):
-    def __init__(self,dataset_list,map_features=['gridlines','coastlines'],map_extent=None,map_proj='PlateCarree',map_proj_kwargs={}):
-        self.dataset_list = dataset_list
+    def __init__(self,datavis_list,map_features=['gridlines','coastlines'],map_extent=None,map_proj='PlateCarree',map_proj_kwargs={}):
+        self.datavis_list = datavis_list
 
         # define plot methods dictionary
         self.plot_methods = {'scatter':self.plot_scatter,'pcolormesh':self.plot_pcolormesh,'contour':self.plot_contour,'contourf':self.plot_contourf,'quiver':self.plot_quiver}
@@ -235,11 +254,19 @@ class Visualize(object):
         self.map_setup(ax)
 
         # plot image on map
-        for dataset in self.dataset_list:
-            f = self.plot_methods[dataset.plot_type.plot_type](ax,dataset)
+        for datavis in self.datavis_list:
+            for pm in datavis.plotmethods:
+                self.plot_methods[pm.plot_type](ax,datavis.dataset,pm)
 
         # get list of unique colorbars
-        colorbars = set([dataset.plot_type for dataset in self.dataset_list])
+        # colorbars = [[pm for pm in dataset.plotmethods if pm.plot_type not in self.no_colorbar] for dataset in self.dataset_list]
+        colorbars = []
+        for datavis in self.datavis_list:
+            for pm in datavis.plotmethods:
+                if pm.plot_type not in self.no_colorbar:
+                    colorbars.append(pm)
+        colorbars = set(colorbars)
+
         # define colorbar axes
         num_cbar = len(colorbars)
         if num_cbar > 4:
@@ -434,31 +461,38 @@ class Visualize(object):
 
 
     # functions for plotting based on different methods
-    def plot_scatter(self,ax,dataset):
+    def plot_scatter(self,ax,dataset,plotmethod):
         # try:
         #     dataset.plot_type.plot_kwargs['s'] = self.s
         # except AttributeError:
-        if 's' not in dataset.plot_type.plot_kwargs:
-            dataset.plot_type.plot_kwargs['s'] = 100*np.exp(-0.03*dataset.values.size)+0.1
+        # if 's' not in dataset.plot_type.plot_kwargs:
+        if 's' not in plotmethod.plot_kwargs:
+            # dataset.plot_type.plot_kwargs['s'] = 100*np.exp(-0.03*dataset.values.size)+0.1
+            plotmethod.plot_kwargs['s'] = 100*np.exp(-0.03*dataset.values.size)+0.1
 
-        f = ax.scatter(dataset.longitude, dataset.latitude, c=dataset.values, transform=ccrs.Geodetic(), **dataset.plot_type.plot_kwargs)
+        # f = ax.scatter(dataset.longitude, dataset.latitude, c=dataset.values, transform=ccrs.Geodetic(), **dataset.plot_type.plot_kwargs)
+        f = ax.scatter(dataset.longitude, dataset.latitude, c=dataset.values, transform=ccrs.Geodetic(), **plotmethod.plot_kwargs)
         return f
 
-    def plot_pcolormesh(self,ax,dataset):
-        f = ax.pcolormesh(dataset.longitude, dataset.latitude, dataset.values, transform=ccrs.PlateCarree(), **dataset.plot_type.plot_kwargs)
+    def plot_pcolormesh(self,ax,dataset,plotmethod):
+        # f = ax.pcolormesh(dataset.longitude, dataset.latitude, dataset.values, transform=ccrs.PlateCarree(), **dataset.plot_type.plot_kwargs)
+        f = ax.pcolormesh(dataset.longitude, dataset.latitude, dataset.values, transform=ccrs.PlateCarree(), **plotmethod.plot_kwargs)
         return f
 
-    def plot_contour(self,ax,dataset):
-        f = ax.contour(dataset.longitude, dataset.latitude, dataset.values, dataset.plot_type.levels, transform=ccrs.PlateCarree(), **dataset.plot_type.plot_kwargs)
+    def plot_contour(self,ax,dataset,plotmethod):
+        # f = ax.contour(dataset.longitude, dataset.latitude, dataset.values, dataset.plot_type.levels, transform=ccrs.PlateCarree(), **dataset.plot_type.plot_kwargs)
+        f = ax.contour(dataset.longitude, dataset.latitude, dataset.values, plotmethod.levels, transform=ccrs.PlateCarree(), **plotmethod.plot_kwargs)
         ax.clabel(f,inline=1,fontsize=8,fmt='%1.1f')
         return f
 
-    def plot_contourf(self,ax,dataset):
-        f = ax.contourf(dataset.longitude, dataset.latitude, dataset.values, dataset.plot_type.levels, transform=ccrs.PlateCarree(), **dataset.plot_type.plot_kwargs)
+    def plot_contourf(self,ax,dataset,plotmethod):
+        # f = ax.contourf(dataset.longitude, dataset.latitude, dataset.values, dataset.plot_type.levels, transform=ccrs.PlateCarree(), **dataset.plot_type.plot_kwargs)
+        f = ax.contourf(dataset.longitude, dataset.latitude, dataset.values, plotmethod.levels, transform=ccrs.PlateCarree(), **plotmethod.plot_kwargs)
         return f
 
-    def plot_quiver(self,ax,dataset):
-        f = ax.quiver(dataset.longitude, dataset.latitude, dataset.values[0], dataset.values[1],transform=ccrs.PlateCarree(), **dataset.plot_type.plot_kwargs)
+    def plot_quiver(self,ax,dataset,plotmethod):
+        # f = ax.quiver(dataset.longitude, dataset.latitude, dataset.values[0], dataset.values[1],transform=ccrs.PlateCarree(), **dataset.plot_type.plot_kwargs)
+        f = ax.quiver(dataset.longitude, dataset.latitude, dataset.values[0], dataset.values[1],transform=ccrs.PlateCarree(), **plotmethod.plot_kwargs)
         return f
 
 

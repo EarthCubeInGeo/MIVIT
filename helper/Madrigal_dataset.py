@@ -21,7 +21,8 @@ def GPSTEC_dataset(targtime, user_info):
         longitude = file['/Data/Array Layout/glon'][:]
         tec = file['/Data/Array Layout/2D Parameters/tec'][:,:,i]
     Lon, Lat = np.meshgrid(longitude,latitude)
-    dataset = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='magma',plot_type='contourf', instrument='GPS', parameter='TEC', plot_kwargs={'alpha':0.2, 'levels':25})
+    # dataset = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='magma',plot_type='contourf', instrument='GPS', parameter='TEC', plot_kwargs={'alpha':0.2, 'levels':25})
+    dataset = DataSet(values=tec,latitude=Lat,longitude=Lon)
     return dataset
 
 def DMSP_dataset(targtime, user_info):
@@ -157,7 +158,8 @@ def MLHFPI_dataset(targtime, line, user_info):
         site = file['/Metadata/Experiment Parameters']['value'][8:11]
         site = [float(s) for s in site]
     # times = np.array([dt.datetime.utcfromtimestamp(t) for t in tstmp])
-    dataset = DataSet(values=Tn, site=site, azimuth=azimuth, elevation=elevation, altitude=altitude, cmap='cool', instrument='Millstone Hill FPI', parameter='Tn')
+    # dataset = DataSet(values=Tn, site=site, azimuth=azimuth, elevation=elevation, altitude=altitude, cmap='cool', instrument='Millstone Hill FPI', parameter='Tn')
+    dataset = DataSet(values=Tn, site=site, azimuth=azimuth, elevation=elevation, altitude=altitude)
     return dataset
 
 def MLHFPIvec_dataset(targtime, line, user_info):
@@ -178,7 +180,8 @@ def MLHFPIvec_dataset(targtime, line, user_info):
         longitude = file['/Data/Table Layout']['glon'][idx]
         altitude = file['/Data/Table Layout']['alte'][idx]
     # time = dt.datetime.utcfromtimestamp(tstmp)
-    dataset = DataSet(values=np.array([np.array([ve]),np.array([vn]),np.array([0.])]), latitude=np.array([latitude]), longitude=np.array([longitude]), altitude=np.array([altitude]), plot_type='quiver', instrument='Millstone Hill FPI', parameter='Vn', plot_kwargs={'width':0.002})
+    # dataset = DataSet(values=np.array([np.array([ve]),np.array([vn]),np.array([0.])]), latitude=np.array([latitude]), longitude=np.array([longitude]), altitude=np.array([altitude]), plot_type='quiver', instrument='Millstone Hill FPI', parameter='Vn', plot_kwargs={'width':0.002})
+    dataset = DataSet(values=np.array([np.array([ve]),np.array([vn]),np.array([0.])]), latitude=np.array([latitude]), longitude=np.array([longitude]), altitude=np.array([altitude]))
     return dataset
 
 def identify_file(t,instrument_code,file_code, user):
