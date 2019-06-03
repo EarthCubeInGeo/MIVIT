@@ -17,12 +17,13 @@ def GPSTEC_dataset(targtime, user_info):
     with h5py.File(filename,'r') as file:
         tstmp = file['/Data/Array Layout/timestamps'][:]
         i = target_index(targtime,tstmp)
+        time_range = [dt.datetime.utcfromtimestamp(tstmp[i]),dt.datetime.utcfromtimestamp(tstmp[i+1])]
         latitude = file['/Data/Array Layout/gdlat'][:]
         longitude = file['/Data/Array Layout/glon'][:]
         tec = file['/Data/Array Layout/2D Parameters/tec'][:,:,i]
     Lon, Lat = np.meshgrid(longitude,latitude)
     # dataset = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='magma',plot_type='contourf', instrument='GPS', parameter='TEC', plot_kwargs={'alpha':0.2, 'levels':25})
-    dataset = DataSet(values=tec,latitude=Lat,longitude=Lon)
+    dataset = DataSet(values=tec,latitude=Lat,longitude=Lon, time_range=time_range, name='GPS TEC')
     return dataset
 
 def DMSP_dataset(targtime, user_info):
@@ -151,6 +152,9 @@ def MLHFPI_dataset(targtime, line, user_info):
     with h5py.File(filename, 'r') as file:
         tstmp = file['/Data/Table Layout']['ut1_unix'][:]
         idx = target_index(targtime,tstmp)
+        stime = file['/Data/Table Layout']['ut1_unix'][idx-2]
+        etime = file['/Data/Table Layout']['ut2_unix'][idx+3]
+        time_range = [dt.datetime.utcfromtimestamp(stime),dt.datetime.utcfromtimestamp(etime)]
         Tn = file['/Data/Table Layout']['tn'][idx-2:idx+3]
         azimuth = file['/Data/Table Layout']['azm'][idx-2:idx+3]
         elevation = file['/Data/Table Layout']['elm'][idx-2:idx+3]
@@ -159,7 +163,7 @@ def MLHFPI_dataset(targtime, line, user_info):
         site = [float(s) for s in site]
     # times = np.array([dt.datetime.utcfromtimestamp(t) for t in tstmp])
     # dataset = DataSet(values=Tn, site=site, azimuth=azimuth, elevation=elevation, altitude=altitude, cmap='cool', instrument='Millstone Hill FPI', parameter='Tn')
-    dataset = DataSet(values=Tn, site=site, azimuth=azimuth, elevation=elevation, altitude=altitude)
+    dataset = DataSet(values=Tn, site=site, azimuth=azimuth, elevation=elevation, altitude=altitude, time_range=time_range, name='Neutral Temperature')
     return dataset
 
 def MLHFPIvec_dataset(targtime, line, user_info):
@@ -174,6 +178,9 @@ def MLHFPIvec_dataset(targtime, line, user_info):
     with h5py.File(filename, 'r') as file:
         tstmp = file['/Data/Table Layout']['ut1_unix'][:]
         idx = target_index(targtime,tstmp)
+        stime = file['/Data/Table Layout']['ut1_unix'][idx]
+        etime = file['/Data/Table Layout']['ut2_unix'][idx+1]
+        time_range = [dt.datetime.utcfromtimestamp(stime),dt.datetime.utcfromtimestamp(etime)]
         ve = file['/Data/Table Layout']['vn1'][idx]
         vn = file['/Data/Table Layout']['vn2'][idx+1]
         latitude = file['/Data/Table Layout']['gdlat'][idx]
@@ -181,7 +188,7 @@ def MLHFPIvec_dataset(targtime, line, user_info):
         altitude = file['/Data/Table Layout']['alte'][idx]
     # time = dt.datetime.utcfromtimestamp(tstmp)
     # dataset = DataSet(values=np.array([np.array([ve]),np.array([vn]),np.array([0.])]), latitude=np.array([latitude]), longitude=np.array([longitude]), altitude=np.array([altitude]), plot_type='quiver', instrument='Millstone Hill FPI', parameter='Vn', plot_kwargs={'width':0.002})
-    dataset = DataSet(values=np.array([np.array([ve]),np.array([vn]),np.array([0.])]), latitude=np.array([latitude]), longitude=np.array([longitude]), altitude=np.array([altitude]))
+    dataset = DataSet(values=np.array([np.array([ve]),np.array([vn]),np.array([0.])]), latitude=np.array([latitude]), longitude=np.array([longitude]), altitude=np.array([altitude]), time_range=time_range, name='Neutral Wind Velocity')
     return dataset
 
 def identify_file(t,instrument_code,file_code, user):

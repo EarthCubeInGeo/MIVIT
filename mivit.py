@@ -232,6 +232,7 @@ class DataSet(object):
 class Visualize(object):
     def __init__(self,datavis_list,map_features=['gridlines','coastlines'],map_extent=None,map_proj='PlateCarree',map_proj_kwargs={}):
         self.datavis_list = datavis_list
+        self.check_time_range()
 
         # define plot methods dictionary
         self.plot_methods = {'scatter':self.plot_scatter,'pcolormesh':self.plot_pcolormesh,'contour':self.plot_contour,'contourf':self.plot_contourf,'quiver':self.plot_quiver}
@@ -243,6 +244,15 @@ class Visualize(object):
         self.map_proj = getattr(ccrs,map_proj)(**map_proj_kwargs)
 
 
+    def check_time_range(self, individual_datasets=False):
+        starttimes = [dv.dataset.time_range[0] for dv in self.datavis_list]
+        endtimes = [dv.dataset.time_range[1] for dv in self.datavis_list]
+        starttime = min(starttimes)
+        endtime = max(endtimes)
+        print('Datasets range from {:%Y-%m-%d %H:%M:%S} to {:%Y-%m-%d %H:%M:%S}, covering {} minutes.'.format(starttime, endtime, (endtime-starttime).total_seconds()/60.))
+        if individual_datasets:
+            for datavis in self.datavis_list:
+                print('{}: {:%Y-%m-%d %H:%M:%S} - {:%Y-%m-%d %H:%M:%S}'.format(datavis.dataset.name, datavis.dataset.time_range[0], datavis.dataset.time_range[1]))
 
     def one_map(self):
         # set up map
@@ -462,36 +472,26 @@ class Visualize(object):
 
     # functions for plotting based on different methods
     def plot_scatter(self,ax,dataset,plotmethod):
-        # try:
-        #     dataset.plot_type.plot_kwargs['s'] = self.s
-        # except AttributeError:
-        # if 's' not in dataset.plot_type.plot_kwargs:
         if 's' not in plotmethod.plot_kwargs:
-            # dataset.plot_type.plot_kwargs['s'] = 100*np.exp(-0.03*dataset.values.size)+0.1
             plotmethod.plot_kwargs['s'] = 100*np.exp(-0.03*dataset.values.size)+0.1
 
-        # f = ax.scatter(dataset.longitude, dataset.latitude, c=dataset.values, transform=ccrs.Geodetic(), **dataset.plot_type.plot_kwargs)
         f = ax.scatter(dataset.longitude, dataset.latitude, c=dataset.values, transform=ccrs.Geodetic(), **plotmethod.plot_kwargs)
         return f
 
     def plot_pcolormesh(self,ax,dataset,plotmethod):
-        # f = ax.pcolormesh(dataset.longitude, dataset.latitude, dataset.values, transform=ccrs.PlateCarree(), **dataset.plot_type.plot_kwargs)
         f = ax.pcolormesh(dataset.longitude, dataset.latitude, dataset.values, transform=ccrs.PlateCarree(), **plotmethod.plot_kwargs)
         return f
 
     def plot_contour(self,ax,dataset,plotmethod):
-        # f = ax.contour(dataset.longitude, dataset.latitude, dataset.values, dataset.plot_type.levels, transform=ccrs.PlateCarree(), **dataset.plot_type.plot_kwargs)
         f = ax.contour(dataset.longitude, dataset.latitude, dataset.values, plotmethod.levels, transform=ccrs.PlateCarree(), **plotmethod.plot_kwargs)
         ax.clabel(f,inline=1,fontsize=8,fmt='%1.1f')
         return f
 
     def plot_contourf(self,ax,dataset,plotmethod):
-        # f = ax.contourf(dataset.longitude, dataset.latitude, dataset.values, dataset.plot_type.levels, transform=ccrs.PlateCarree(), **dataset.plot_type.plot_kwargs)
         f = ax.contourf(dataset.longitude, dataset.latitude, dataset.values, plotmethod.levels, transform=ccrs.PlateCarree(), **plotmethod.plot_kwargs)
         return f
 
     def plot_quiver(self,ax,dataset,plotmethod):
-        # f = ax.quiver(dataset.longitude, dataset.latitude, dataset.values[0], dataset.values[1],transform=ccrs.PlateCarree(), **dataset.plot_type.plot_kwargs)
         f = ax.quiver(dataset.longitude, dataset.latitude, dataset.values[0], dataset.values[1],transform=ccrs.PlateCarree(), **plotmethod.plot_kwargs)
         return f
 
