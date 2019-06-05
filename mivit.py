@@ -65,6 +65,12 @@ class PlotMethod(object):
 class DataSet(object):
     def __init__(self,**kwargs):
         '''
+        A class that holds a single data set.  Datasets must have:
+            - spatial coordinates
+            - data values at each coordinate
+            - the range of time over which the dataset values are valid
+
+        A DataSet object can be initialized a variety of different ways, based on the input keyword arguments povided
         Can be initialized with EITHER:
         latitude, longitude, altitude
         OR
@@ -108,6 +114,34 @@ class DataSet(object):
                 self.latitude, self.longitude, self.altitude = self.azel2gd_ranges(self.site[0],self.site[1],self.site[2],self.azimuth,self.elevation,self.ranges)
             elif hasattr(self,'altitude'):
                 self.latitude, self.longitude, self.altitude = self.azel2gd_alt(self.site[0],self.site[1],self.site[2],self.azimuth,self.elevation,self.altitude)
+
+        if hasattr(self, 'sat_comp'):
+            self.values = self.convert_sat_comp_to_geodetic(self.values, self.latitude, self.longitude, self.altitude)
+
+
+
+    def convert_sat_comp_to_geodetic(self, vector, latitude, longitude, altitude):
+        '''
+        Convert vectors with satellite forward, left, up components to geodetic East, North, Up
+        '''
+        import coord_convert as cc
+
+        x, y, z = cc.geodetic_to_cartesian(latitude, longitude, altitude)
+
+        sat_position = np.array([x, y, z]).T
+        sat_pos_dif = np.concatenate((np.array([np.nan,np.nan,np.nan])[None,:],sat_position[2:,:]-sat_position[:-2,:],np.array([np.nan,np.nan,np.nan])[None,:]),axis=0)
+        forwECEF = sat_pos_dif/np.linalg.norm(sat_pos_dif,axis=-1)[:,None]
+        vn, ve, vz = cc.vector_cartesian_to_geodetic(forwECEF[:,0], forwECEF[:,1], forwECEF[:,2], x, y, z)
+
+        forw = np.array([ve, vn, vz]).T
+        vert = np.tile(np.array([0,0,1]),(len(forw),1))
+        left = np.cross(vert,forw)
+
+        R = np.array([forw.T, left.T, vert.T])
+        Vgd = np.einsum('ijk,...ik->...ij',R.T,vector.T).T
+
+        return Vgd
+
 
 
 
@@ -227,6 +261,41 @@ class DataSet(object):
 
         return vx, vy, vz
 
+    def vector_cartesian_to_geodetic(self,vx,vy,vz,x,y,z):
+        # gclat, gclon, gcalt = cartesian_to_geocentric(x,y,z)
+        # r, t, p = cartesian_to_spherical(x, y, z)
+        r = np.sqrt(x**2+y**2+z**2)
+        t = np.arccos(z/r)
+        p = np.arctan2(y,x)
+        # gclat, gclon, gcalt = spherical_to_geocentric(r,t,p)
+        # gclat = 90.-t*180./np.pi
+        # gclon = p*180./np.pi
+        # gcalt = r/1000.
+
+        # vnc, vec, vuc = vector_cartesian_to_geocentric(vx,vy,vz,x,y,z)
+        # vr, vt, vp = vector_cartesian_to_spherical(vx,vy,vz,x,y,z)
+        # r,t,p = cartesian_to_spherical(x,y,z)
+        vuc = vx*np.sin(t)*np.cos(p)+vy*np.sin(t)*np.sin(p)+vz*np.cos(t)
+        vnc = -vx*np.cos(t)*np.cos(p)+vy*np.cos(t)*np.sin(p)-vz*np.sin(t)
+        vec = -vx*np.sin(p)+vy*np.cos(p)
+        # # vn, ve, vu = vector_spherical_to_geocentric(vr,vt,vp)
+        # vnc = -vt
+        # vec = vp
+        # vuc = vr
+
+        # vnd, ved, vud = vector_geocentric_to_geodetic(vnc,vec,vuc,gclat,gclon,gcalt)
+        # gdlat, gdlon, gdalt = geocentric_to_geodetic(gclat,gclon,gcalt)
+        gdlat, gdlon, gdalt = self.cartesian_to_geodetic(x, y, z)
+        # lam_gc = gclat*np.pi/180.
+        lam_gc = np.pi/2.-t
+        lam_gd = gdlat*np.pi/180.
+
+        b = lam_gd-lam_gc
+        vud = vuc*np.cos(b)+vnc*np.sin(b)
+        vnd = -vuc*np.sin(b)+vnc*np.cos(b)
+        ved = vec
+
+        return ved, vnd, vud
 
 
 class Visualize(object):

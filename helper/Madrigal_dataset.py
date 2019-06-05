@@ -29,44 +29,45 @@ def GPSTEC_dataset(targtime, user_info):
 def DMSP_dataset(targtime, user_info):
 
     instrument_code = 8100
-    # file_code = 10117
+    file_code = 10245       # F15 with UT quality flags
 
-    density = []
-    latitude = []
-    longitude = []
-    altitude = []
+    filename = identify_file(targtime,instrument_code,file_code, user_info)
 
-    for file_code in range(10106,10119):
+    with h5py.File(filename, 'r') as file:
+        tstmp = file['/Data/Table Layout']['ut1_unix'][:]
+        idx1 = target_index(targtime-dt.timedelta(hours=1),tstmp)
+        idx2 = target_index(targtime+dt.timedelta(hours=1),tstmp)
+        time_range = [dt.datetime.utcfromtimestamp(tstmp[idx1]), dt.datetime.utcfromtimestamp(tstmp[idx2])]
+        dens = file['/Data/Table Layout']['ni'][idx1:idx2]
+        lat = file['/Data/Table Layout']['gdlat'][idx1:idx2]
+        lon = file['/Data/Table Layout']['glon'][idx1:idx2]
+        alt = file['/Data/Table Layout']['gdalt'][idx1:idx2]
 
-        print file_code
-        try:
-            filename = identify_file(targtime,instrument_code,file_code, user_info)
-        except:
-            continue
+    dataset = DataSet(values=dens,latitude=lat,longitude=lon,altitude=alt, time_range=time_range, name='DMSP')
+    return dataset
 
-        with h5py.File(filename, 'r') as file:
-            tstmp = file['/Data/Table Layout']['ut1_unix'][:]
-            idx = target_index(targtime,tstmp)
-            dens = file['/Data/Table Layout']['ne'][idx-3000:idx+3000]
-            lat = file['/Data/Table Layout']['gdlat'][idx-3000:idx+3000]
-            lon = file['/Data/Table Layout']['glon'][idx-3000:idx+3000]
-            alt = file['/Data/Table Layout']['gdalt'][idx-3000:idx+3000]
-        density.extend(dens)
-        latitude.extend(lat)
-        longitude.extend(lon)
-        altitude.extend(alt)
 
-    print latitude
+def DMSPvec_dataset(targtime, user_info):
+    instrument_code = 8100
+    file_code = 10245       # F15 with UT quality flags
 
-    dataset = DataSet(values=np.array(density),latitude=np.array(latitude),longitude=np.array(longitude),altitude=np.array(altitude),cmap='jet',plot_type='scatter',instrument='DMSP',parameter='Ne')
-    # with h5py.File(filename,'r') as file:
-    #     tstmp = file['/Data/Array Layout/timestamps'][:]
-    #     i = target_index(targtime,tstmp)
-    #     latitude = file['/Data/Array Layout/gdlat'][:]
-    #     longitude = file['/Data/Array Layout/glon'][:]
-    #     tec = file['/Data/Array Layout/2D Parameters/tec'][:,:,i]
-    # Lon, Lat = np.meshgrid(longitude,latitude)
-    # dataset = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='magma',plot_type='contourf', instrument='GPS', parameter='TEC', plot_kwargs={'alpha':0.2, 'levels':25})
+    filename = identify_file(targtime,instrument_code,file_code, user_info)
+
+    with h5py.File(filename, 'r') as file:
+        tstmp = file['/Data/Table Layout']['ut1_unix'][:]
+        idx1 = target_index(targtime-dt.timedelta(hours=1),tstmp)
+        idx2 = target_index(targtime+dt.timedelta(hours=1),tstmp)
+        time_range = [dt.datetime.utcfromtimestamp(tstmp[idx1]), dt.datetime.utcfromtimestamp(tstmp[idx2])]
+        forw = file['/Data/Table Layout']['ion_v_sat_for'][idx1:idx2]
+        left = file['/Data/Table Layout']['ion_v_sat_left'][idx1:idx2]
+        vert = file['/Data/Table Layout']['vert_ion_v'][idx1:idx2]
+        lat = file['/Data/Table Layout']['gdlat'][idx1:idx2]
+        lon = file['/Data/Table Layout']['glon'][idx1:idx2]
+        alt = file['/Data/Table Layout']['gdalt'][idx1:idx2]
+
+    # set forward values to zero (RAM velocities are difficult to interpret)
+    forw = np.zeros(forw.shape)
+    dataset = DataSet(values=np.array([forw,left,vert]), latitude=lat, longitude=lon, altitude=alt, time_range=time_range, name='DMSP Velocity', sat_comp=True)
     return dataset
 
 
