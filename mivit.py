@@ -12,8 +12,10 @@ from apexpy.apex import ApexHeightError
 class DataVisualization(object):
     def __init__(self, dataset, plotmethods):
         '''
-        dataset: a DataSet object
-        plotmethods: either a single PlotMethod object or a list of PlotMethod objects
+        Combined dataset and plot methods that specifies both a dataset and how it should be displayed.
+        Parameters:
+            - dataset: A DataSet object
+            - plotmethods: Either a single PlotMethod object or a list of PlotMethod objects
             describing different ways the dataset should be visualized
         '''
         self.dataset = dataset
@@ -25,38 +27,32 @@ class DataVisualization(object):
 
 
 class PlotMethod(object):
-    def __init__(self,**kwargs):
+    def __init__(self,plot_type='scatter',label='',**kwargs):
         '''
-        REQUIRED:
-        plot_type
-        OPTIONAL:
-        cmap
-        vmin/vmax
-        plot label
-        point size (for scatter)
-        line thickness
-        Other matplotib kwargs?
+        Plotting information for an arbitrary dataset.
+        Parameters:
+            - plot_type: A string naming a matplotlib pyplot plot method.  Current valid inputs are scatter, pcolormesh, contour, contourf, and quiver.
+            - label (optional): A label for this plotting method.  This will be used for the colorbar associated with this plot, if one is created.
+        Other Parameters:
+            - **kwargs: Other matplotlib keyword arguments that are approprite for the plot.  For contour plots, if levels is not specified, a default value of 20 is used.
         '''
 
-        # assign defaults
-        self.plot_type = 'scatter'
-        self.plot_kwargs = {}
+        self.plot_type = plot_type
+        self.label = label
 
-        if 'levels' in kwargs:
-            self.levels = kwargs['levels']
-            del kwargs['levels']
-        else:
-            self.levels = 20
-
-        if 'cmap' in kwargs:
+        # if 'cmap' argument provided as string, convert to a colormap
+        try:
             kwargs['cmap'] = plt.get_cmap(kwargs['cmap'])
+        except KeyError:
+            pass
 
-
-        self.plot_type = kwargs['plot_type']
-        del kwargs['plot_type']
-
-        self.label = kwargs['label']
-        del kwargs['label']
+        # if plot type is contour or contourf, make sure level keyword is set
+        if self.plot_type=='contour' or self.plot_type=='contourf':
+            try:
+                self.levels = kwargs['levels']
+                del kwargs['levels']
+            except KeyError:
+                self.levels = 20
 
         self.plot_kwargs = kwargs
 
@@ -65,58 +61,59 @@ class PlotMethod(object):
 class DataSet(object):
     def __init__(self,**kwargs):
         '''
-        A class that holds a single data set.  Datasets must have:
+        A single data set object.  Datasets must have:
             - spatial coordinates
             - data values at each coordinate
             - the range of time over which the dataset values are valid
+
+        Parameters:
+            - values: Array of data values.  Can be either scalar values or 3 components of vectors.
+            - time_range: [starttime, endtime] specifying the range of times over which the data set is valid.
+            - latitude (optional): Array of latitude coordinates for each data point
+            - longitude (optional): Array of longitude coordinates for each data point
+            - altitude (optional): Array of altitude coordinates for each data point
+            - site (optional): [lat, lon, alt] of the instrument site
+            - azimuth (optional): Array of azimuth values for each data point
+            - elevation (optional): Array of elevation values for each data point
+            - slantrange (optional): Array of slant range values for each data point
 
         A DataSet object can be initialized a variety of different ways, based on the input keyword arguments povided
         Can be initialized with EITHER:
         latitude, longitude, altitude
         OR
         site, azimuth, elevation, ranges
-        MUST HAVE
-        values
-        OPTIONAL
-        name
-        units
+        OR
+        site, azimuth, elevation, altitude
 
-            Valid keyword inputs:
-            longitude
-            latitude
-            altitude
-            site
-            azimuth
-            elevation
-            ranges
-            values
-            instrument
-            time_range
-            cmap
-            plot_type
-            plot_kwargs
+        Vector components:
+        Geodetic E, N, Z
+        Satelite forward, left, vertical
+        If satellite components are input, set sat_comp=True
         '''
-
-        # assign input arguments
-        self.__dict__.update(kwargs)
-
-        # if not isinstance(self.plot_type, list):
-        #     self.plot_type = [self.plot_type]
 
         # parameters defining the ellipsoid earth (from WGS84)
         self.Req = 6378137.
         f = 1/298.257223563
         self.e2 = 2*f-f**2
 
-        # find latitude/longitude arrays if site, azimuth, and elevation are given
-        if not hasattr(self,'longitude'):
-            if hasattr(self,'ranges'):
-                self.latitude, self.longitude, self.altitude = self.azel2gd_ranges(self.site[0],self.site[1],self.site[2],self.azimuth,self.elevation,self.ranges)
-            elif hasattr(self,'altitude'):
-                self.latitude, self.longitude, self.altitude = self.azel2gd_alt(self.site[0],self.site[1],self.site[2],self.azimuth,self.elevation,self.altitude)
+        print kwargs.keys()
 
-        if hasattr(self, 'sat_comp'):
-            self.values = self.convert_sat_comp_to_geodetic(self.values, self.latitude, self.longitude, self.altitude)
+        # convert input coordinates to latitude, longitude, altitude arrays
+        if all(k in kwargs for k in ('latitude', 'longitude', 'altitude')):
+            pass
+        elif all(k in kwargs for k in ('site','azimuth','elevation','slantrange')):
+            kwargs['latitude'], kwargs['longitude'], kwargs['altitude'] = self.azel2gd_ranges(kwargs['site'][0],kwargs['site'][1],kwargs['site'][2],kwargs['azimuth'],kwargs['elevation'],kwargs['ranges'])
+        elif all(k in kwargs for k in ('site','azimuth','elevation','altitude')):
+            kwargs['latitude'], kwargs['longitude'], kwargs['altitude'] = self.azel2gd_alt(kwargs['site'][0],kwargs['site'][1],kwargs['site'][2],kwargs['azimuth'],kwargs['elevation'],kwargs['altitude'])
+        else:
+            raise ValueError('Incorrect set of input arguments!')
+
+        # if input vector in satelite forward, left, vertical components, convert to geodetic east, north, up
+        if 'sat_comp' in kwargs:
+            kwargs['values'] = self.convert_sat_comp_to_geodetic(kwargs['values'], kwargs['latitude'], kwargs['longitude'], kwargs['altitude'])
+
+        # assign input arguments
+        self.__dict__.update(kwargs)
 
 
 

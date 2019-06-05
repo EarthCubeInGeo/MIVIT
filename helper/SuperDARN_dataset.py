@@ -22,7 +22,9 @@ def SuperDARN_dataset(targtime,radar, davitpy_kwargs=None):
     # get range of times scan covers
     time_range = [scan[0].time,scan[-1].time]
 
+    altitude = np.full(np.array(fov.lonFull).shape, 400.)
+
     # dataset = DataSet(longitude=np.array(fov.lonFull),latitude=np.array(fov.latFull),values=np.array(velocity),cmap='seismic',plot_type='pcolormesh',instrument='SuperDARN '+radar.upper(), parameter='Velocity',plot_kwargs={'vmin':-40,'vmax':40})
-    dataset = DataSet(longitude=np.array(fov.lonFull),latitude=np.array(fov.latFull),values=np.array(velocity),time_range=time_range,name='SuperDARN {}'.format(radar.upper()))
+    dataset = DataSet(longitude=np.array(fov.lonFull),latitude=np.array(fov.latFull),altitude=altitude,values=np.array(velocity),time_range=time_range,name='SuperDARN {}'.format(radar.upper()))
 
     return dataset

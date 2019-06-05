@@ -22,8 +22,9 @@ def GPSTEC_dataset(targtime, user_info):
         longitude = file['/Data/Array Layout/glon'][:]
         tec = file['/Data/Array Layout/2D Parameters/tec'][:,:,i]
     Lon, Lat = np.meshgrid(longitude,latitude)
+    Alt = np.full(Lon.shape, 350.)
     # dataset = DataSet(values=tec,latitude=Lat,longitude=Lon,cmap='magma',plot_type='contourf', instrument='GPS', parameter='TEC', plot_kwargs={'alpha':0.2, 'levels':25})
-    dataset = DataSet(values=tec,latitude=Lat,longitude=Lon, time_range=time_range, name='GPS TEC')
+    dataset = DataSet(values=tec,latitude=Lat,longitude=Lon,altitude=Alt, time_range=time_range, name='GPS TEC')
     return dataset
 
 def DMSP_dataset(targtime, user_info):
