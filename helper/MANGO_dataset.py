@@ -1,6 +1,6 @@
 # mango_dataset.py
 
-from mangopy.mosaic import Mosaic
+from mangopy import Mosaic
 import datetime as dt
 import numpy as np
 from mivit import DataSet

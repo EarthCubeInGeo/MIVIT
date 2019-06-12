@@ -3,7 +3,7 @@
 
 import numpy as np
 import datetime as dt
-import configparser
+import ConfigParser as configparser
 from mivit import PlotMethod, DataSet, DataVisualization, Visualize
 import helper
 import copy

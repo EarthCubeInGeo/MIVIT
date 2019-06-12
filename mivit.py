@@ -164,27 +164,18 @@ class DataSet(object):
         points = np.arange(0.,max(proj_alt)/np.sin(min(elevation)),1.)*1000.
         x0, y0, z0 = cc.geodetic_to_cartesian(lat0,lon0,alt0)
 
-        latitude = []
-        longitude = []
-        altitude = []
+        ve = np.cos(elevation)*np.sin(azimuth)
+        vn = np.cos(elevation)*np.cos(azimuth)
+        vu = np.sin(elevation)
+        vx, vy, vz = cc.vector_geodetic_to_cartesian(vn,ve,vu,lat0,lon0,alt0)
+        lat, lon, alt = cc.cartesian_to_geodetic(x0+vx*points[:,None],y0+vy*points[:,None],z0+vz*points[:,None])
 
-        for el, az, h in zip(elevation,azimuth,proj_alt):
+        # find index closeset to the projection altitude
+        idx = np.argmin(np.abs(alt-proj_alt),axis=0)
 
-            ve = np.cos(el)*np.sin(az)
-            vn = np.cos(el)*np.cos(az)
-            vu = np.sin(el)
-            vx, vy, vz = cc.vector_geodetic_to_cartesian(vn,ve,vu,lat0,lon0,alt0)
-            lat, lon, alt = cc.cartesian_to_geodetic(x0+vx*points,y0+vy*points,z0+vz*points)
-
-            idx = (np.abs(alt-h)).argmin()
-
-            latitude.append(lat[idx])
-            longitude.append(lon[idx])
-            altitude.append(alt[idx])
-
-        latitude = np.array(latitude)
-        longitude = np.array(longitude)
-        altitude = np.array(altitude)
+        latitude = lat[tuple(idx),tuple(np.arange(len(proj_alt)))]
+        longitude = lon[tuple(idx),tuple(np.arange(len(proj_alt)))]
+        altitude = alt[tuple(idx),tuple(np.arange(len(proj_alt)))]
 
         return latitude, longitude, altitude
 
