@@ -1,6 +1,9 @@
 # mango.py
 
-import mangopy as mango
+try:
+    import mangopy as mango
+except ImportError:
+    raise ImportError('Cannot use MANGO helper functions without mangopy installed. See https://github.com/astib/MANGO for information on mangopy.')
 import datetime as dt
 import numpy as np
 from ..dataset import DataSet

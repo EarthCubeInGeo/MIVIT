@@ -1,6 +1,9 @@
 # madrigal.py
 
-import madrigalWeb.madrigalWeb
+try:
+    import madrigalWeb.madrigalWeb
+except ImportError:
+    raise ImportError('Cannot use Madrigal helper functions without madrigalWeb installed. See http://cedar.openmadrigal.org/docs/name/rr_python.html for information on madrigalWeb.')
 import datetime as dt
 import numpy as np
 import os

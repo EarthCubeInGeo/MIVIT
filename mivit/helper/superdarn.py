@@ -1,6 +1,9 @@
 # superdarn.py
 
-from davitpy import pydarn
+try:
+    from davitpy import pydarn
+except ImportError:
+    raise ImportError('Cannot use SuperDARN helper functions without davitpy installed. See https://github.com/vtsuperdarn/davitpy for information on davitpy.')
 import numpy as np
 from ..dataset import DataSet
 

@@ -1,6 +1,5 @@
 numpy
 datetime
-davitpy
-mangopy
-madrigalWeb
-visuamisr
+matplotlib
+cartopy
+apexpy
