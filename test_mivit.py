@@ -125,11 +125,25 @@ def test_superdarn():
     plot = mivit.Visualize(sd_data, map_features=['gridlines','coastlines','mag_gridlines'], map_extent=[-130,-65,20,50], map_proj='LambertConformal', map_proj_kwargs={'central_longitude':-100,'central_latitude':35})
     plot.one_map()
 
+def test_amisr():
+
+    targtime = dt.datetime(2017,5,28,6,35)
+
+    filename = 'TestDataSets/20151107.003_lp_3min-fitcal.h5'
+
+    dataset = mivit.helper.amisr.density(targtime, filename)
+    pt = mivit.PlotMethod(cmap='jet', plot_type='scatter', label='PFISR Density', vmin=0., vmax=2.e11, s=10)
+    data = mivit.DataVisualization(dataset, pt)
+
+    plot = mivit.Visualize([data], map_features=['gridlines','coastlines','mag_gridlines'], map_extent=[-170,-135,50,75], map_proj='LambertConformal', map_proj_kwargs={'central_longitude':-150,'central_latitude':65})
+    plot.one_map()
+
 
 def main():
     # test()
     # test_mango()
-    test_superdarn()
+    # test_superdarn()
+    test_amisr()
 
 if __name__ == '__main__':
     main()
