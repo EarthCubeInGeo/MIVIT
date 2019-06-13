@@ -2,7 +2,7 @@
 
 import visuamisr
 import numpy as np
-from mivit import DataSet
+from ..dataset import DataSet
 
 def density(targtime, filename):
 

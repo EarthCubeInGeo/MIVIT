@@ -3,7 +3,7 @@
 import mangopy as mango
 import datetime as dt
 import numpy as np
-from mivit import DataSet
+from ..dataset import DataSet
 
 def camera(targtime, site, mangopy_kwargs=None):
     m = mango.Mango(**mangopy_kwargs)

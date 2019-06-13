@@ -4,7 +4,7 @@ from madrigal import identify_file, target_index
 import numpy as np
 import datetime as dt
 import h5py
-from mivit import DataSet
+from ...dataset import DataSet
 
 def density(starttime, endtime, user_info):
 

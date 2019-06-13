@@ -2,7 +2,7 @@
 
 from davitpy import pydarn
 import numpy as np
-from mivit import DataSet
+from ..dataset import DataSet
 
 # TODO: These functions are all VERY similar - should probably be consolidated using some kind of more general function to avoid replicating code
 
