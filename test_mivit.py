@@ -100,11 +100,36 @@ def test_mango():
     plot.one_map()
 
 
+def test_superdarn():
+
+    targtime = dt.datetime(2017,5,28,6,35)
+
+    ptv = mivit.PlotMethod(cmap='seismic',plot_type='pcolormesh',label='SuperDARN Velocity',vmin=-200,vmax=200)
+    ptp = mivit.PlotMethod(cmap='Greens',plot_type='pcolormesh',label='SuperDARN Velocity',vmin=0,vmax=20)
+    pts = mivit.PlotMethod(cmap='Oranges',plot_type='pcolormesh',label='SuperDARN Velocity',vmin=0,vmax=100)
+
+    sd_data = []
+
+    davitpy_kwargs = {'src':'local','fileType':'fitex','local_dirfmt':'./TestDataSets/SuperDARN/'}
+    for rad in ['bks','fhe','fhw','kap','pgr','sas','wal']:
+
+        # v = mivit.helper.superdarn.velocity(targtime,rad,davitpy_kwargs=davitpy_kwargs)
+        # sd_data.append(mivit.DataVisualization(v, ptv))
+
+        # p = mivit.helper.superdarn.power(targtime,rad,davitpy_kwargs=davitpy_kwargs)
+        # sd_data.append(mivit.DataVisualization(p, ptp))
+
+        s = mivit.helper.superdarn.spectralwidth(targtime,rad,davitpy_kwargs=davitpy_kwargs)
+        sd_data.append(mivit.DataVisualization(s, pts))
+
+    plot = mivit.Visualize(sd_data, map_features=['gridlines','coastlines','mag_gridlines'], map_extent=[-130,-65,20,50], map_proj='LambertConformal', map_proj_kwargs={'central_longitude':-100,'central_latitude':35})
+    plot.one_map()
 
 
 def main():
     # test()
-    test_mango()
+    # test_mango()
+    test_superdarn()
 
 if __name__ == '__main__':
     main()
