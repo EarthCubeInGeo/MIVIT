@@ -1,0 +1,6 @@
+numpy
+datetime
+davitpy
+mangopy
+madrigalWeb
+visuamisr
