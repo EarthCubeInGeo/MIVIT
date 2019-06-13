@@ -81,11 +81,30 @@ def test():
     # plot.multi_map()
 
 
+def test_mango():
+
+    targtime = dt.datetime(2017,5,28,6,35)
+
+    # get mango data
+    mangopy_kwargs = {'datadir':'./TestDataSets/MANGO'}
+
+    dataset = mivit.helper.mango.camera(targtime,'Hat Creek Observatory', mangopy_kwargs=mangopy_kwargs)
+    pt = mivit.PlotMethod(cmap='jet',plot_type='scatter', label='MANGO', vmin=0, vmax=255, alpha=0.5, zorder=6)
+    mango = mivit.DataVisualization(dataset, pt)
+
+    dataset = mivit.helper.mango.mosaic(targtime, mangopy_kwargs=mangopy_kwargs)
+    pt = mivit.PlotMethod(cmap='gist_gray',plot_type='pcolormesh', label='MANGO', vmin=0, vmax=255)
+    mosaic = mivit.DataVisualization(dataset, pt)
+
+    plot = mivit.Visualize([mango, mosaic], map_features=['gridlines','coastlines','mag_gridlines'], map_extent=[-130,-65,20,50], map_proj='LambertConformal', map_proj_kwargs={'central_longitude':-100,'central_latitude':35})
+    plot.one_map()
+
 
 
 
 def main():
-    test()
+    # test()
+    test_mango()
 
 if __name__ == '__main__':
     main()
