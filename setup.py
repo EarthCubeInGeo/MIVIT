@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 import os
 
 # Get the package requirements
@@ -11,6 +11,6 @@ setup(name='mivit',
       version='0.1',
       description='Multi-Instrument Visualization Toolkit',
       license='GPLv3',
-      packages=['mivit'],
+      packages=find_packages(),
       install_requires=REQUIREMENTS,
       zip_safe=False)
