@@ -3,7 +3,10 @@
 
 import numpy as np
 import datetime as dt
-import ConfigParser as configparser
+try:
+    import ConfigParser as configparser
+except:
+    import configparser
 import mivit
 import copy
 
@@ -12,13 +15,14 @@ def test():
 
     targtime = dt.datetime(2017,5,28,6,35)
 
-    # get SuperDARN data
-    pt = mivit.PlotMethod(cmap='seismic',plot_type='pcolormesh',label='SuperDARN Velocity',vmin=-40,vmax=40)
+    # # get SuperDARN data
+    # pt = mivit.PlotMethod(cmap='seismic',plot_type='pcolormesh',label='SuperDARN Velocity',vmin=-40,vmax=40)
+    # sd_data = []
+    # davitpy_kwargs = {'src':'local','fileType':'fitex','local_dirfmt':'./TestDataSets/SuperDARN/'}
+    # for rad in ['bks','fhe','fhw','kap','pgr','sas','wal']:
+    #     sd = mivit.helper.superdarn.velocity(targtime,rad,davitpy_kwargs=davitpy_kwargs)
+    #     sd_data.append(mivit.DataVisualization(sd, pt))
     sd_data = []
-    davitpy_kwargs = {'src':'local','fileType':'fitex','local_dirfmt':'./TestDataSets/SuperDARN/'}
-    for rad in ['bks','fhe','fhw','kap','pgr','sas','wal']:
-        sd = mivit.helper.superdarn.velocity(targtime,rad,davitpy_kwargs=davitpy_kwargs)
-        sd_data.append(mivit.DataVisualization(sd, pt))
 
 
     # get mango data

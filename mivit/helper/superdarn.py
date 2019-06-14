@@ -1,15 +1,16 @@
 # superdarn.py
 
-try:
-    from davitpy import pydarn
-except ImportError:
-    raise ImportError('Cannot use SuperDARN helper functions without davitpy installed. See https://github.com/vtsuperdarn/davitpy for information on davitpy.')
 import numpy as np
 from ..dataset import DataSet
 
 # TODO: These functions are all VERY similar - should probably be consolidated using some kind of more general function to avoid replicating code
 
 def velocity(targtime, radar, davitpy_kwargs=None):
+
+    try:
+        from davitpy import pydarn
+    except ImportError:
+        raise ImportError('Cannot use SuperDARN helper functions without davitpy installed. See https://github.com/vtsuperdarn/davitpy for information on davitpy.')
 
     sdptr = pydarn.sdio.radDataOpen(targtime,radar,**davitpy_kwargs)
     scan = sdptr.readScan()
@@ -33,7 +34,12 @@ def velocity(targtime, radar, davitpy_kwargs=None):
 
 def power(targtime, radar, davitpy_kwargs=None):
 
-    sdptr = pydarn.sdio.radDataOpen(targtime,radar,**davitpy_kwargs)
+    try:
+        from davitpy import pydarn
+    except ImportError:
+        raise ImportError('Cannot use SuperDARN helper functions without davitpy installed. See https://github.com/vtsuperdarn/davitpy for information on davitpy.')
+        sdptr = pydarn.sdio.radDataOpen(targtime,radar,**davitpy_kwargs)
+
     scan = sdptr.readScan()
 
     site = pydarn.radar.site(radId=scan[0].stid,dt=scan[0].time)
@@ -54,6 +60,11 @@ def power(targtime, radar, davitpy_kwargs=None):
     return dataset
 
 def spectralwidth(targtime, radar, davitpy_kwargs=None):
+
+    try:
+        from davitpy import pydarn
+    except ImportError:
+        raise ImportError('Cannot use SuperDARN helper functions without davitpy installed. See https://github.com/vtsuperdarn/davitpy for information on davitpy.')
 
     sdptr = pydarn.sdio.radDataOpen(targtime,radar,**davitpy_kwargs)
     scan = sdptr.readScan()

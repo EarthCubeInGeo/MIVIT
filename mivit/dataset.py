@@ -1,7 +1,7 @@
 # dataset.py
 
 import numpy as np
-import coord_convert as cc
+from . import coord_convert as cc
 
 class DataSet(object):
     def __init__(self,**kwargs):

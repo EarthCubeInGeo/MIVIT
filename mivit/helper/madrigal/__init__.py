@@ -1,3 +1,3 @@
-import gps
-import dmsp
-import fpi
+from . import gps
+from . import dmsp
+from . import fpi

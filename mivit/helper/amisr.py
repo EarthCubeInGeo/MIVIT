@@ -1,13 +1,14 @@
 # amisr.py
 
-try:
-    import visuamisr
-except ImportError:
-    raise ImportError('Cannot use AMISR helper functions without visuamisr installed. See https://github.com/asreimer/visuamisr for information on visuamisr.')
 import numpy as np
 from ..dataset import DataSet
 
 def density(targtime, filename):
+
+    try:
+        import visuamisr
+    except ImportError:
+        raise ImportError('Cannot use AMISR helper functions without visuamisr installed. See https://github.com/asreimer/visuamisr for information on visuamisr.')
 
     data = visuamisr.read_data(filename)
 

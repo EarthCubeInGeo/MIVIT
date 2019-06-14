@@ -1,9 +1,5 @@
 # madrigal.py
 
-try:
-    import madrigalWeb.madrigalWeb
-except ImportError:
-    raise ImportError('Cannot use Madrigal helper functions without madrigalWeb installed. See http://cedar.openmadrigal.org/docs/name/rr_python.html for information on madrigalWeb.')
 import datetime as dt
 import numpy as np
 import os
@@ -11,6 +7,11 @@ import tempfile
 
 
 def identify_file(t,instrument_code,file_code, user, madrigal_dir):
+
+    try:
+        import madrigalWeb.madrigalWeb
+    except ImportError:
+        raise ImportError('Cannot use Madrigal helper functions without madrigalWeb installed. See http://cedar.openmadrigal.org/docs/name/rr_python.html for information on madrigalWeb.')
 
     # initialize MadrigalData object and establish conection with Madrigal website
     test =  madrigalWeb.madrigalWeb.MadrigalData('http://cedar.openmadrigal.org/')

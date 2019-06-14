@@ -1,6 +1,6 @@
 # fpi.py
 
-from madrigal import identify_file, target_index
+from .madrigal import identify_file, target_index
 import numpy as np
 import datetime as dt
 import h5py
