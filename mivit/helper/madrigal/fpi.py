@@ -6,14 +6,14 @@ import datetime as dt
 import h5py
 from ...dataset import DataSet
 
-def Tn(targtime, line, user_info):
+def Tn(targtime, line, user_info, madrigal_dir=None):
 
     file_codes = {'red':7100,'green':7110}
 
     instrument_code = 5360
     file_code = file_codes[line]
 
-    filename = identify_file(targtime,instrument_code,file_code, user_info)
+    filename = identify_file(targtime,instrument_code,file_code, user_info, madrigal_dir)
 
     with h5py.File(filename, 'r') as file:
         tstmp = file['/Data/Table Layout']['ut1_unix'][:]
@@ -30,14 +30,14 @@ def Tn(targtime, line, user_info):
     dataset = DataSet(values=Tn, site=site, azimuth=azimuth, elevation=elevation, altitude=altitude, time_range=time_range, name='Neutral Temperature')
     return dataset
 
-def Vn(targtime, line, user_info):
+def Vn(targtime, line, user_info, madrigal_dir=None):
 
     file_codes = {'red':7101,'green':7111}
 
     instrument_code = 5360
     file_code = file_codes[line]
 
-    filename = identify_file(targtime,instrument_code,file_code, user_info)
+    filename = identify_file(targtime,instrument_code,file_code, user_info, madrigal_dir)
 
     with h5py.File(filename, 'r') as file:
         tstmp = file['/Data/Table Layout']['ut1_unix'][:]

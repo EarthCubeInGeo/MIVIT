@@ -7,9 +7,10 @@ except ImportError:
 import datetime as dt
 import numpy as np
 import os
+import tempfile
 
 
-def identify_file(t,instrument_code,file_code, user):
+def identify_file(t,instrument_code,file_code, user, madrigal_dir):
 
     # initialize MadrigalData object and establish conection with Madrigal website
     test =  madrigalWeb.madrigalWeb.MadrigalData('http://cedar.openmadrigal.org/')
@@ -23,7 +24,11 @@ def identify_file(t,instrument_code,file_code, user):
     datafile = [file.name for file in fileList if file.kindat==file_code][0]
 
     # create file path by appending the Madarigal file name to the data directory
-    filename = './TestDataSets/'+datafile.split('/')[-1]
+    filename = os.path.split(datafile)[1]
+    if madrigal_dir:
+        filename = os.path.join(madrigal_dir,filename)
+    else:
+        filename = os.path.join(tempfile.gettempdir(),filename)
 
     # if file does not exist, download it
     if not os.path.exists(filename):

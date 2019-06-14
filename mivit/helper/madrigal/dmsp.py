@@ -6,12 +6,12 @@ import datetime as dt
 import h5py
 from ...dataset import DataSet
 
-def density(starttime, endtime, user_info):
+def density(starttime, endtime, user_info, madrigal_dir=None):
 
     instrument_code = 8100
     file_code = 10245       # F15 with UT quality flags
 
-    filename = identify_file(starttime,instrument_code,file_code, user_info)
+    filename = identify_file(starttime,instrument_code,file_code, user_info, madrigal_dir)
 
     with h5py.File(filename, 'r') as file:
         tstmp = file['/Data/Table Layout']['ut1_unix'][:]
@@ -27,11 +27,11 @@ def density(starttime, endtime, user_info):
     return dataset
 
 
-def velocity(starttime, endtime, user_info):
+def velocity(starttime, endtime, user_info, madrigal_dir=None):
     instrument_code = 8100
     file_code = 10245       # F15 with UT quality flags
 
-    filename = identify_file(starttime,instrument_code,file_code, user_info)
+    filename = identify_file(starttime,instrument_code,file_code, user_info, madrigal_dir)
 
     with h5py.File(filename, 'r') as file:
         tstmp = file['/Data/Table Layout']['ut1_unix'][:]

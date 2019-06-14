@@ -6,12 +6,12 @@ import datetime as dt
 import h5py
 from ...dataset import DataSet
 
-def tec(targtime, user_info):
+def tec(targtime, user_info, madrigal_dir=None):
 
     instrument_code = 8000
     file_code = 3500
 
-    filename = identify_file(targtime,instrument_code,file_code, user_info)
+    filename = identify_file(targtime,instrument_code,file_code, user_info, madrigal_dir)
 
     with h5py.File(filename,'r') as file:
         tstmp = file['/Data/Array Layout/timestamps'][:]

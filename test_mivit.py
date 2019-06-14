@@ -36,42 +36,42 @@ def test():
     user_email = config.get('DEFAULT', 'MADRIGAL_EMAIL')
     user_affiliation = config.get('DEFAULT', 'MADRIGAL_AFFILIATION')
     user_info = {'fullname':user_fullname,'email':user_email,'affiliation':user_affiliation}
-
+    madrigal_dir = './TestDataSets'
 
 
     # get GPS TEC
     pt = mivit.PlotMethod(cmap='magma',plot_type='contourf', label='GPS TEC', alpha=0.2, levels=25, vmin=0, vmax=20)
     pt2 = mivit.PlotMethod(cmap='magma',plot_type='contour', label='GPS TEC', levels=25, vmin=0, vmax=20)
-    tec_dat = mivit.helper.madrigal.gps.tec(targtime,user_info)
+    tec_dat = mivit.helper.madrigal.gps.tec(targtime,user_info, madrigal_dir=madrigal_dir)
     tec = mivit.DataVisualization(tec_dat,[pt,pt2])
 
 
     # get Millston Hill FPI data
-    fpi_g_dat = mivit.helper.madrigal.fpi.Tn(targtime, 'green', user_info)
+    fpi_g_dat = mivit.helper.madrigal.fpi.Tn(targtime, 'green', user_info, madrigal_dir=madrigal_dir)
     pt = mivit.PlotMethod(cmap='Greens', plot_type='scatter', label='FPI Tn', vmin=min(fpi_g_dat.values), vmax=max(fpi_g_dat.values), s=100)
     fpi_g = mivit.DataVisualization(fpi_g_dat, pt)
 
     pt = mivit.PlotMethod(color='green', plot_type='quiver', label='FPI Vn', width=0.002)
-    fpi_vec_g_dat = mivit.helper.madrigal.fpi.Vn(targtime, 'green', user_info)
+    fpi_vec_g_dat = mivit.helper.madrigal.fpi.Vn(targtime, 'green', user_info, madrigal_dir=madrigal_dir)
     fpi_vec_g = mivit.DataVisualization(fpi_vec_g_dat, pt)
 
-    fpi_r_dat = mivit.helper.madrigal.fpi.Tn(targtime, 'red', user_info)
+    fpi_r_dat = mivit.helper.madrigal.fpi.Tn(targtime, 'red', user_info, madrigal_dir=madrigal_dir)
     pt = mivit.PlotMethod(cmap='Reds', plot_type='scatter', label='FPI Tn', vmin=min(fpi_r_dat.values), vmax=max(fpi_r_dat.values), s=30)    
     fpi_r = mivit.DataVisualization(fpi_r_dat, pt)
 
     pt = mivit.PlotMethod(color='red', plot_type='quiver', label='FPI Vn', width=0.002)
-    fpi_vec_r_dat = mivit.helper.madrigal.fpi.Vn(targtime, 'red', user_info)
+    fpi_vec_r_dat = mivit.helper.madrigal.fpi.Vn(targtime, 'red', user_info, madrigal_dir=madrigal_dir)
     fpi_vec_r = mivit.DataVisualization(fpi_vec_r_dat, pt)
 
 
 
     # get DMSP data
     pt = mivit.PlotMethod(cmap='jet',plot_type='scatter',label='DMSP Ni', vmin=0, vmax=3e10, s=20)
-    dmsp_dat = mivit.helper.madrigal.dmsp.density(targtime-dt.timedelta(hours=1), targtime+dt.timedelta(hours=1), user_info)
+    dmsp_dat = mivit.helper.madrigal.dmsp.density(targtime-dt.timedelta(hours=1), targtime+dt.timedelta(hours=1), user_info, madrigal_dir=madrigal_dir)
     dmsp = mivit.DataVisualization(dmsp_dat, pt)
 
     pt = mivit.PlotMethod(cmap='jet',plot_type='quiver',label='DMSP Vi', width=0.002)
-    dmsp_dat = mivit.helper.madrigal.dmsp.velocity(targtime-dt.timedelta(hours=1), targtime+dt.timedelta(hours=1), user_info)
+    dmsp_dat = mivit.helper.madrigal.dmsp.velocity(targtime-dt.timedelta(hours=1), targtime+dt.timedelta(hours=1), user_info, madrigal_dir=madrigal_dir)
     dmsp_vec = mivit.DataVisualization(dmsp_dat, pt)
 
 
