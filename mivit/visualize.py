@@ -1,5 +1,5 @@
 # Mulit-Instrument VIsualization Toolkit (MIVIT)
-# My Inventory of Very Important Tadpools
+# My Inventory of Very Important Tadpoles
 
 import numpy as np
 import matplotlib.pyplot as plt
