@@ -71,7 +71,8 @@ class DataSet(object):
         sat_position = np.array([x, y, z]).T
         sat_pos_dif = np.concatenate((np.array([np.nan,np.nan,np.nan])[None,:],sat_position[2:,:]-sat_position[:-2,:],np.array([np.nan,np.nan,np.nan])[None,:]),axis=0)
         forwECEF = sat_pos_dif/np.linalg.norm(sat_pos_dif,axis=-1)[:,None]
-        vn, ve, vz = cc.vector_cartesian_to_geodetic(forwECEF[:,0], forwECEF[:,1], forwECEF[:,2], x, y, z)
+        # vn, ve, vz = cc.vector_cartesian_to_geodetic(forwECEF[:,0], forwECEF[:,1], forwECEF[:,2], x, y, z)
+        ve, vn, vz = pm.uvw2enu(forwECEF[:,0], forwECEF[:,1], forwECEF[:,2], latitude, longitude)
 
         forw = np.array([ve, vn, vz]).T
         vert = np.tile(np.array([0,0,1]),(len(forw),1))
